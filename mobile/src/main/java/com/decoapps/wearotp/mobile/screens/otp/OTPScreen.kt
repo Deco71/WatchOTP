@@ -74,7 +74,7 @@ fun test(seed : String) {
     val T0: kotlin.Long = 0
     val X: kotlin.Long = 30
 
-    var steps : String = "0"
+    var steps = "0"
     val df: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
     df.timeZone = TimeZone.getTimeZone("UTC")
     val epoch = Instant.now().epochSecond

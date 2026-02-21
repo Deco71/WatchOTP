@@ -1,14 +1,4 @@
 package com.decoapps.wearotp.shared.data;
-/**
- Copyright (c) 2011 IETF Trust and the persons identified as
- authors of the code. All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, is permitted pursuant to, and subject to the license
- terms contained in, the Simplified BSD License set forth in Section
- 4.c of the IETF Trust's Legal Provisions Relating to IETF Documents
- (http://trustee.ietf.org/license-info).
- */
 
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.GeneralSecurityException;
@@ -94,13 +84,15 @@ private static byte[] hmac_sha(String crypto, byte[] keyBytes,
                                       String returnDigits,
                                       String crypto){
         int codeDigits = Integer.decode(returnDigits);
-        String result = null;
+        StringBuilder result;
 
         // Using the counter
         // First 8 bytes are for the movingFactor
         // Compliant with base RFC 4226 (HOTP)
-        while (time.length() < 16 )
-            time = "0" + time;
+        StringBuilder timeBuilder = new StringBuilder(time);
+        while (timeBuilder.length() < 16 )
+            timeBuilder.insert(0, "0");
+        time = timeBuilder.toString();
 
         // Get the HEX in a Byte[]
         byte[] msg = hexStr2Bytes(time);
@@ -126,11 +118,11 @@ private static byte[] hmac_sha(String crypto, byte[] keyBytes,
 
         int otp = binary % DIGITS_POWER[codeDigits];
 
-        result = Integer.toString(otp);
+        result = new StringBuilder(Integer.toString(otp));
         while (result.length() < codeDigits) {
-            result = "0" + result;
+            result.insert(0, "0");
         }
-        return result;
+        return result.toString();
     }
 
 }

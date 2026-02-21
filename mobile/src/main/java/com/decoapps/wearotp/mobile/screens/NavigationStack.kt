@@ -1,4 +1,4 @@
-package com.decoapps.wearotp.mobile.screens;
+package com.decoapps.wearotp.mobile.screens
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
