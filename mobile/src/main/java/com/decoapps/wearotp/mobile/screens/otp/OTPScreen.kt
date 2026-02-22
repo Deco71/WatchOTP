@@ -5,17 +5,22 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
+import com.decoapps.wearotp.mobile.screens.Screen
 import com.decoapps.wearotp.shared.data.TOTP.generateTOTP
 import java.lang.Long
 import java.text.DateFormat
@@ -64,11 +69,20 @@ fun base32ToHex(base32: String): String {
 }
 
 @Composable
-fun OTPScreen() {
-    HelloWorldScreen()
+fun OTPScreen(navController: NavController, otpViewModel: OTPViewModel) {
+    Scaffold(
+        floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate(Screen.AddOTP.route) }) {
+                Icon(Icons.Outlined.Add, contentDescription = "Add new OTP")
+            }
+        }
+    ) { innerPadding ->
+        OTPList(modifier = Modifier
+            .padding(innerPadding), otpViewModel)
+    }
 }
 
-fun test(seed : String) {
+private fun test(seed : String) {
 
     // Seed for HMAC-SHA1 - 20 bytes
     val T0: kotlin.Long = 0
@@ -101,16 +115,14 @@ fun test(seed : String) {
 
 
 @Composable
-fun HelloWorldScreen() {
-    val inputText = remember { mutableStateOf("") }
-    val addedTexts = remember { mutableStateOf(listOf<String>()) }
-
+fun OTPList(modifier: Modifier, otpViewModel: OTPViewModel) {
+    val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
     Box(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
         Column(
-            modifier = Modifier
+            modifier = modifier
                 .fillMaxWidth()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -122,31 +134,24 @@ fun HelloWorldScreen() {
                 modifier = Modifier.padding(bottom = 24.dp)
             )
 
-            TextField(
-                value = inputText.value,
-                onValueChange = { inputText.value = it },
-                label = { Text("Enter text") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)
-            )
 
-            Button(
+            otpServices.forEach {
+                OTPCard(
+                    service = it,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp)
+                )
+            }
+
+            /*Button(
                 onClick = {
                     test("I65VU7K5ZQL7WB4E")
                 },
-                modifier = Modifier.padding(bottom = 16.dp)
+                modifier = modifier.padding(bottom = 16.dp)
             ) {
-                Text("Add")
-            }
-
-            // Display added texts
-            addedTexts.value.forEach { text ->
-                Text(
-                    text = text,
-                    modifier = Modifier.padding(8.dp)
-                )
-            }
+                Text("Test")
+            }*/
         }
     }
 }

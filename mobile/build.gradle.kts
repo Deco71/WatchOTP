@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -62,6 +63,8 @@ dependencies {
     implementation(libs.easycrop)
     implementation(libs.exifinterface)
     implementation(libs.google.material)
+    implementation(libs.androidx.material3)
+    implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

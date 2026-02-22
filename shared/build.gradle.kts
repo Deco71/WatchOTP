@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.android.library)
+    kotlin("plugin.serialization")
 }
 
 android {
@@ -40,6 +41,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
+    implementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
 }
