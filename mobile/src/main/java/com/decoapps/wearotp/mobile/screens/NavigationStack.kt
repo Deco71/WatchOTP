@@ -32,7 +32,7 @@ fun NavigationStack(modifier: Modifier = Modifier) {
         }
         composable(route = Screen.Settings.route) {
             SettingsScreen(
-
+                navController
             )
         }
     }

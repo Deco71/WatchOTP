@@ -18,7 +18,7 @@ class OTPViewModel() : ViewModel() {
     private val _otpServices = MutableStateFlow<List<OTPService>>(emptyList())
     val otpServices: StateFlow<List<OTPService>> = _otpServices
 
-    private fun loadTokensFromDirectory(directoryName: String, context: Context) {
+    fun loadTokensFromDirectory(directoryName: String, context: Context) {
         viewModelScope.launch {
             val tokensDir = File(context.filesDir, directoryName)
             val services = tokenFileManager.loadEncryptedTokens(tokensDir)
@@ -38,7 +38,7 @@ class OTPViewModel() : ViewModel() {
     fun deleteToken(tokenId: String, context: Context) {
         viewModelScope.launch {
             val tokensDir = File(context.filesDir, "tokens")
-            val tokenFile = File(tokensDir, "$tokenId.enc")
+            val tokenFile = File(tokensDir, tokenId)
             if (tokenFileManager.deleteToken(tokenFile)) {
                 // Ricarica i token dopo la cancellazione
                 loadTokensFromDirectory("tokens", context)
