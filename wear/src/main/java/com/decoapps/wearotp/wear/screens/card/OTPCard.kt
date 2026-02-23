@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -33,6 +31,7 @@ import androidx.wear.compose.material3.Icon
 import androidx.wear.compose.material3.MaterialTheme
 import androidx.wear.compose.material3.Text
 import com.decoapps.wearotp.shared.data.OTPService
+import com.decoapps.wearotp.shared.viewmodels.OTPCardViewModel
 
 @Composable
 fun OTPCard(
@@ -63,12 +62,12 @@ fun OTPCard(
             ) {
                 CircularProgressIndicator(
                     progress = { animatedProgress },
-                    modifier = Modifier.size(40.dp),
+                    modifier = Modifier.size(42.dp),
                     strokeWidth = 3.dp
                 )
                 Box(
                     modifier = Modifier
-                        .size(30.dp)
+                        .size(32.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
@@ -77,7 +76,7 @@ fun OTPCard(
                         imageVector = Icons.Default.Key,
                         contentDescription = "Service icon",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(22.dp)
                     )
                 }
             }
@@ -93,7 +92,6 @@ fun OTPCard(
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
-                Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = viewModel.formatToken(service.token ?: "------"),
                     style = MaterialTheme.typography.labelLarge.copy(

@@ -39,6 +39,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.decoapps.wearotp.shared.data.OTPService
+import com.decoapps.wearotp.shared.viewmodels.OTPCardViewModel
+import com.decoapps.wearotp.shared.viewmodels.ProgressColorLevel
 
 @Composable
 fun OTPCard(
