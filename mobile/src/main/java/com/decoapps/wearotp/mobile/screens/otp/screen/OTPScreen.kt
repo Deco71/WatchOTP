@@ -1,5 +1,7 @@
-package com.decoapps.wearotp.mobile.screens.otp
+package com.decoapps.wearotp.mobile.screens.otp.screen
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -29,8 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
+import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
+import com.decoapps.wearotp.mobile.screens.otp.card.OTPCard
 import com.decoapps.wearotp.shared.data.TOTP.generateTOTP
 import java.lang.Long
 import java.text.DateFormat
@@ -44,7 +49,7 @@ import java.time.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OTPScreen(navController: NavController, otpViewModel: OTPViewModel) {
+fun OTPScreen(navController: NavController) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -70,7 +75,7 @@ fun OTPScreen(navController: NavController, otpViewModel: OTPViewModel) {
             color = MaterialTheme.colorScheme.background
         )
         {
-            OTPList(Modifier, otpViewModel)
+            OTPList(Modifier)
         }
     }
 }
@@ -78,7 +83,8 @@ fun OTPScreen(navController: NavController, otpViewModel: OTPViewModel) {
 
 
 @Composable
-fun OTPList(modifier: Modifier, otpViewModel: OTPViewModel) {
+fun OTPList(modifier: Modifier) {
+    val otpViewModel: OTPViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(Unit) {

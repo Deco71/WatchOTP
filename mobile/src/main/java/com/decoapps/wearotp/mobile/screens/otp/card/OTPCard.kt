@@ -1,8 +1,5 @@
-package com.decoapps.wearotp.mobile.screens.otp
+package com.decoapps.wearotp.mobile.screens.otp.card
 
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -29,12 +26,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -44,52 +37,37 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.decoapps.wearotp.shared.data.OTPService
-import kotlinx.coroutines.delay
-import java.time.Instant
 
 @Composable
 fun OTPCard(
     service: OTPService,
     modifier: Modifier = Modifier,
-    onDelete: ((OTPService) -> Unit)? = null
+    onDelete: ((OTPService) -> Unit)? = null,
+    viewModel: OTPCardViewModel = viewModel(key = service.id)
 ) {
     val context = LocalContext.current
-    var showDeleteDialog by remember { mutableStateOf(false) }
-
-    val period = 30L
-    var timeProgress by remember { mutableFloatStateOf(0f) }
-
-    LaunchedEffect(Unit) {
-        while (true) {
-            val epoch = Instant.now().epochSecond
-            val secondsInPeriod = epoch % period
-            timeProgress = 1f - (secondsInPeriod / period.toFloat())
-            delay(1000L)
-        }
-    }
+    val uiState by viewModel.uiState.collectAsState()
 
     val animatedProgress by animateFloatAsState(
-        targetValue = timeProgress,
+        targetValue = uiState.timeProgress,
         animationSpec = tween(durationMillis = 900, easing = LinearEasing),
         label = "timerProgress"
     )
 
-    if (showDeleteDialog) {
+    if (uiState.showDeleteDialog) {
         AlertDialog(
-            onDismissRequest = { showDeleteDialog = false },
+            onDismissRequest = { viewModel.onDeleteDismissed() },
             title = { Text("Remove Service") },
-            text = { Text("Are you sure you want to remove \"${service.name ?: "service?"}\"?") },
+            text = { Text("Are you sure you want to remove \"${uiState.deleteDialogServiceName}\"?") },
             confirmButton = {
-                TextButton(onClick = {
-                    showDeleteDialog = false
-                    onDelete?.invoke(service)
-                }) {
+                TextButton(onClick = { viewModel.onDeleteConfirmed(service, onDelete) }) {
                     Text("Confirm", color = MaterialTheme.colorScheme.error)
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDeleteDialog = false }) {
+                TextButton(onClick = { viewModel.onDeleteDismissed() }) {
                     Text("Cancel")
                 }
             }
@@ -98,15 +76,8 @@ fun OTPCard(
 
     Card(
         modifier = modifier.combinedClickable(
-            onClick = {
-                val token = service.token ?: return@combinedClickable
-                val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                val clip = ClipData.newPlainText("TOTP", token)
-                clipboard.setPrimaryClip(clip)
-            },
-            onLongClick = {
-                showDeleteDialog = true
-            }
+            onClick = { viewModel.onCardClick(context, service) },
+            onLongClick = { viewModel.onCardLongClick(service) }
         ),
         shape = CardDefaults.shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -126,10 +97,10 @@ fun OTPCard(
                     modifier = Modifier.size(56.dp),
                     strokeWidth = 3.dp,
                     strokeCap = StrokeCap.Round,
-                    color = when {
-                        timeProgress < 0.2f -> MaterialTheme.colorScheme.error
-                        timeProgress < 0.4f -> MaterialTheme.colorScheme.tertiary
-                        else -> MaterialTheme.colorScheme.primary
+                    color = when (uiState.progressColorLevel) {
+                        ProgressColorLevel.CRITICAL -> MaterialTheme.colorScheme.error
+                        ProgressColorLevel.WARNING -> MaterialTheme.colorScheme.tertiary
+                        ProgressColorLevel.NORMAL -> MaterialTheme.colorScheme.primary
                     },
                     trackColor = MaterialTheme.colorScheme.surfaceVariant
                 )
@@ -161,7 +132,7 @@ fun OTPCard(
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = formatToken(service.token ?: "------"),
+                    text = viewModel.formatToken(service.token ?: "------"),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = FontFamily.Monospace,
                         letterSpacing = 4.sp
@@ -174,7 +145,3 @@ fun OTPCard(
     }
 }
 
-private fun formatToken(token: String): String {
-    return if (token.length == 6) "${token.substring(0, 3)} ${token.substring(3)}"
-    else token
-}
