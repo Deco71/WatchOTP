@@ -2,6 +2,8 @@ package com.decoapps.wearotp.mobile.screens.otp.add
 
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.LocalActivity
+import androidx.annotation.OptIn
+import androidx.camera.core.ExperimentalGetImage
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +23,11 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
 import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
+import com.decoapps.wearotp.mobile.utils.camera.QrScanningScreen
 import com.decoapps.wearotp.shared.data.OTPService
 import java.util.UUID
 
+@OptIn(ExperimentalGetImage::class)
 @Composable
 fun AddOTPScreen(modifier: Modifier = Modifier, navController: NavController) {
     val serviceName = remember { mutableStateOf("") }
@@ -34,7 +38,8 @@ fun AddOTPScreen(modifier: Modifier = Modifier, navController: NavController) {
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        Column(
+        QrScanningScreen()
+        /*Column(
             modifier = modifier
                 .fillMaxWidth()
                 .padding(16.dp),
@@ -69,6 +74,6 @@ fun AddOTPScreen(modifier: Modifier = Modifier, navController: NavController) {
             }
 
 
-        }
+        }*/
     }
 }
