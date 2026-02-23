@@ -9,7 +9,7 @@ import androidx.core.content.ContextCompat
 import androidx.compose.ui.platform.LocalContext
 
 @Composable
-fun FeatureThatRequiresCameraPermission(
+fun RequireCameraPermission(
     deniedContent: @Composable (Boolean, () -> Unit) -> Unit,
     grantedContent: @Composable () -> Unit
 ) {

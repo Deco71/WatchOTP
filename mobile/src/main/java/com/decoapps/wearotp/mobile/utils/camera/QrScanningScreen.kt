@@ -1,6 +1,5 @@
 package com.decoapps.wearotp.mobile.utils.camera
 
-import android.util.Log
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -12,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -23,53 +24,38 @@ import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toAndroidRect
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
-import com.decoapps.wearotp.mobile.utils.camera.permission.FeatureThatRequiresCameraPermission
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
+import com.decoapps.wearotp.mobile.screens.Screen
+import com.decoapps.wearotp.mobile.utils.camera.permission.RequireCameraPermission
 import com.decoapps.wearotp.mobile.utils.camera.permission.NeedCameraPermissionScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.withContext
 
-typealias AndroidSize = android.util.Size
-
 @Composable
 @ExperimentalGetImage
-fun QrScanningScreen() {
-    val viewModel: QrScanViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+fun QrScanningScreen(navController: NavController) {
+    val viewModel: QrScanViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
 
-    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val previewView = remember { PreviewView(context) }
     val preview = Preview.Builder().build()
     val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
-        .setTargetResolution(
-            AndroidSize(previewView.width, previewView.height)
-        )
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
         .build()
 
-    val targetRect by remember { derivedStateOf { uiState.targetRect } }
-
-    LaunchedEffect(targetRect) {
+    LaunchedEffect(Unit) {
         imageAnalysis.setAnalyzer(
             Dispatchers.Default.asExecutor(),
-            QrCodeAnalyzer(
-                targetRect = android.graphics.Rect(
-                    targetRect.left.toInt(),
-                    targetRect.top.toInt(),
-                    targetRect.right.toInt(),
-                    targetRect.bottom.toInt()
-                ),
-                previewView = previewView,
-            ) { result ->
-                Log.d("QRCODETROVATO", result)
+            QrCodeAnalyzer { result ->
                 viewModel.onQrCodeDetected(result)
             }
         )
@@ -78,30 +64,27 @@ fun QrScanningScreen() {
     val cameraSelector = CameraSelector.Builder()
         .requireLensFacing(uiState.lensFacing)
         .build()
-    var camera by remember { mutableStateOf<Camera?>(null) }
 
     LaunchedEffect(uiState.lensFacing) {
         val cameraProvider = ProcessCameraProvider.getInstance(context)
-        camera = withContext(Dispatchers.IO) {
+        withContext(Dispatchers.IO) {
             cameraProvider.get()
         }.bindToLifecycle(lifecycleOwner, cameraSelector, preview, imageAnalysis)
-        preview.setSurfaceProvider(previewView.surfaceProvider)
+        preview.surfaceProvider = previewView.surfaceProvider
     }
 
-    FeatureThatRequiresCameraPermission(
-        deniedContent = { isGranted, requestPermission ->
+    RequireCameraPermission(
+        deniedContent = { _, requestPermission ->
             NeedCameraPermissionScreen(
-                requestPermission = requestPermission,
-                shouldShowRationale = false // Puoi gestire la rationale custom se vuoi
+                requestPermission = requestPermission
             )
         },
         grantedContent = {
             Scaffold { paddingValues ->
-                Content(
+                QRCodeReaderBorder(
                     modifier = Modifier.padding(paddingValues),
-                    uiState = uiState,
                     previewView = previewView,
-                    onTargetPositioned = viewModel::onTargetPositioned
+                    navController = navController
                 )
             }
         }
@@ -110,11 +93,10 @@ fun QrScanningScreen() {
 
 
 @Composable
-private fun Content(
+private fun QRCodeReaderBorder(
     modifier: Modifier,
     previewView: PreviewView,
-    uiState: QrScanUIState,
-    onTargetPositioned: (Rect) -> Unit,
+    navController: NavController
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
@@ -138,13 +120,19 @@ private fun Content(
                 .background(Color.Black.copy(alpha = .5f)),
             contentAlignment = Alignment.Center,
         ) {
+            Text(
+                modifier = Modifier
+                    .align(Alignment.TopCenter)
+                    .padding(top = 12.dp)
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = .6f), RoundedCornerShape(16.dp))
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                text = "Scan the QR code provided by your service",
+                color = MaterialTheme.colorScheme.onSurface
+            )
             Canvas(
                 modifier = Modifier
                     .size(250.dp)
                     .border(1.dp, Color.White, RoundedCornerShape(16.dp))
-                    .onGloballyPositioned {
-                        onTargetPositioned(it.boundsInRoot())
-                    }
             ) {
                 val offset = Offset(
                     x = (size.width - widthInPx) / 2,
@@ -161,15 +149,18 @@ private fun Content(
                 )
             }
         }
-        if (uiState.detectedQR.isNotEmpty()) {
-            Text(
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(bottom = 24.dp)
-                    .background(Color.White.copy(alpha = .6f), RoundedCornerShape(16.dp))
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                text = uiState.detectedQR,
-            )
+
+        Button(
+            onClick = {
+                navController.popBackStack()
+                navController.navigate(Screen.AddOTPManually.route)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 24.dp)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+        ) {
+            Text("Add Manually")
         }
     }
 }

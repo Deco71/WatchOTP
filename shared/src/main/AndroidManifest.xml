@@ -4,6 +4,6 @@
     <application
         android:allowBackup="false"
         android:supportsRtl="true"
-        android:theme="@android:style/Theme.DeviceDefault" />
+        />
 
 </manifest>

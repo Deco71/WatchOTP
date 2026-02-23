@@ -5,6 +5,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.decoapps.wearotp.mobile.screens.otp.add.AddOTPManually
 import com.decoapps.wearotp.mobile.screens.otp.screen.OTPScreen
 import com.decoapps.wearotp.mobile.screens.otp.add.AddOTPScreen
 import com.decoapps.wearotp.mobile.screens.settings.SettingsScreen
@@ -29,6 +30,13 @@ fun NavigationStack(modifier: Modifier = Modifier) {
             SettingsScreen(
                 navController
             )
+        }
+        composable(route = Screen.AddOTPManually.route) {
+            AddOTPManually(
+                modifier,
+                navController
+            )
+
         }
     }
 }

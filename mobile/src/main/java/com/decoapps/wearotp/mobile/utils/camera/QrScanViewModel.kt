@@ -2,7 +2,6 @@ package com.decoapps.wearotp.mobile.utils.camera
 
 import android.util.Log
 import androidx.camera.core.CameraSelector
-import androidx.compose.ui.geometry.Rect
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,15 +17,10 @@ class QrScanViewModel @Inject constructor(
         Log.d("Scanner", result)
         _uiState.update { it.copy(detectedQR = result) }
     }
-
-    fun onTargetPositioned(rect: Rect) {
-        _uiState.update { it.copy(targetRect = rect) }
-    }
 }
 
 data class QrScanUIState(
     val loading: Boolean = false,
     val detectedQR: String = "",
-    val targetRect: Rect = Rect.Zero,
     val lensFacing: Int = CameraSelector.LENS_FACING_BACK,
 )
