@@ -1,7 +1,7 @@
 package com.decoapps.wearotp.mobile.screens.otp.card
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -26,8 +26,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -57,11 +61,32 @@ fun OTPCard(
 
     val token by viewModel.token.collectAsState()
 
-    val animatedProgress by animateFloatAsState(
-        targetValue = timeProgress,
-        animationSpec = tween(durationMillis = 900, easing = LinearEasing),
-        label = "timerProgress"
-    )
+    val animatedProgress = remember { Animatable(timeProgress) }
+    val isFirstFrame = remember { mutableStateOf(true) }
+    val lastAnimatedValue = remember { mutableFloatStateOf(timeProgress) }
+
+    val timeSkip = ((100/(service.interval)) * 0.01).toFloat()
+    val animationTime = 900
+
+    LaunchedEffect(timeProgress) {
+        if (isFirstFrame.value) {
+            animatedProgress.snapTo(timeProgress)
+            isFirstFrame.value = false
+        } else if(lastAnimatedValue.floatValue < timeProgress) {
+            animatedProgress.snapTo(timeProgress)
+            animatedProgress.animateTo(
+                targetValue = (timeProgress - timeSkip),
+                animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)
+            )
+        }
+        else {
+            animatedProgress.animateTo(
+                targetValue = timeProgress - timeSkip,
+                animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)
+            )
+        }
+        lastAnimatedValue.floatValue = timeProgress
+    }
 
     if (showDeleteDialog) {
         AlertDialog(
@@ -100,7 +125,7 @@ fun OTPCard(
                 contentAlignment = Alignment.Center
             ) {
                 CircularProgressIndicator(
-                    progress = { animatedProgress },
+                    progress = { animatedProgress.value },
                     modifier = Modifier.size(56.dp),
                     strokeWidth = 3.dp,
                     strokeCap = StrokeCap.Round,
