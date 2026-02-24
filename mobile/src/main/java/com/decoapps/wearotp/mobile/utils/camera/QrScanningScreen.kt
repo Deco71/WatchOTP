@@ -1,5 +1,7 @@
 package com.decoapps.wearotp.mobile.utils.camera
 
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.camera.core.*
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -32,17 +34,24 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
+import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.utils.camera.permission.RequireCameraPermission
 import com.decoapps.wearotp.mobile.utils.camera.permission.NeedCameraPermissionScreen
+import com.decoapps.wearotp.shared.data.OtpauthParseResult
+import com.decoapps.wearotp.shared.data.OTPService
+import com.decoapps.wearotp.shared.data.parseOtpauth
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asExecutor
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 @Composable
 @ExperimentalGetImage
 fun QrScanningScreen(navController: NavController) {
     val viewModel: QrScanViewModel = viewModel()
     val uiState by viewModel.uiState.collectAsState()
+
+    val otpViewModel: OTPViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
@@ -56,7 +65,31 @@ fun QrScanningScreen(navController: NavController) {
         imageAnalysis.setAnalyzer(
             Dispatchers.Default.asExecutor(),
             QrCodeAnalyzer { result ->
-                viewModel.onQrCodeDetected(result)
+                if (result?.startsWith("otpauth://") == true) {
+                    when (val parsed = parseOtpauth(result)) {
+                        is OtpauthParseResult.Success -> {
+                            val fields = parsed.fields
+                            otpViewModel.saveToken(
+                                OTPService(
+                                    id = UUID.randomUUID().toString().replace("-", ""),
+                                    issuer = fields.issuer,
+                                    accountName = fields.accountName,
+                                    secret = fields.secret,
+                                    algorithm = fields.algorithm,
+                                    digits = fields.digits,
+                                    interval = fields.interval
+                                ),
+                                context
+                            )
+                            viewModel.onQrCodeDetected(result, navController)
+                        }
+                        is OtpauthParseResult.Error -> {
+                            viewModel.onQrCodeNotValid(parsed.message)
+                        }
+                    }
+                } else {
+                    viewModel.onQrCodeNotValid("Invalid QR Code")
+                }
             }
         )
     }
@@ -84,7 +117,8 @@ fun QrScanningScreen(navController: NavController) {
                 QRCodeReaderBorder(
                     modifier = Modifier.padding(paddingValues),
                     previewView = previewView,
-                    navController = navController
+                    navController = navController,
+                    error = uiState.error
                 )
             }
         }
@@ -96,7 +130,8 @@ fun QrScanningScreen(navController: NavController) {
 private fun QRCodeReaderBorder(
     modifier: Modifier,
     previewView: PreviewView,
-    navController: NavController
+    navController: NavController,
+    error: String? = null,
 ) {
     Box(modifier = modifier.fillMaxSize()) {
         AndroidView(
@@ -146,6 +181,20 @@ private fun QRCodeReaderBorder(
                     cornerRadius = CornerRadius(radiusInPx, radiusInPx),
                     color = Color.Transparent,
                     blendMode = BlendMode.Clear
+                )
+            }
+
+            if (error != null) {
+                Text(
+                    modifier = Modifier
+                        .padding(bottom = 12.dp)
+                        .background(
+                            MaterialTheme.colorScheme.errorContainer.copy(alpha = .6f),
+                            RoundedCornerShape(16.dp)
+                        )
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    text = error,
+                    color = MaterialTheme.colorScheme.onErrorContainer
                 )
             }
         }

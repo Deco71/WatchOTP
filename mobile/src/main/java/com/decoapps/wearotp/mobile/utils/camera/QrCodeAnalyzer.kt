@@ -33,10 +33,7 @@ class QrCodeAnalyzer(
                                 return@let
                             }
                             val barcode = barcodes[0]
-                            Log.d("QR Analyzer", "Detected ${barcode.rawValue} barcodes")
-                            if (barcode.rawValue?.startsWith("otpauth://") == true) {
-                                barcode.rawValue?.let(onQrCodeDetected)
-                            }
+                            barcode.rawValue?.let(onQrCodeDetected)
                         }
                     } else {
                         it.exception?.let { exception ->
