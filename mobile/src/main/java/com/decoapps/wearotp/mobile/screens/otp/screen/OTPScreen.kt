@@ -36,7 +36,7 @@ import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
 import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.screens.otp.card.OTPCard
-import com.decoapps.wearotp.shared.data.TOTP.generateTOTP
+/*import com.decoapps.wearotp.shared.data.TOTP.generateTOTP
 import java.lang.Long
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -45,7 +45,7 @@ import java.util.Locale
 import java.util.TimeZone
 import kotlin.String
 import kotlin.text.uppercase
-import java.time.Instant
+import java.time.Instant*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -117,21 +117,24 @@ fun OTPList(modifier: Modifier) {
                         }
                     )
                 }
+
+                /*item {
+                    Button(
+                        onClick = {
+                            test("K45F5LZPFG7ET5GGSWYOFS2RS5GOJIII")
+                        },
+                        modifier = modifier.padding(bottom = 16.dp)
+                    ) {
+                        Text("Test")
+                    }
+                }*/
             }
 
-            /*Button(
-                onClick = {
-                    test("I65VU7K5ZQL7WB4E")
-                },
-                modifier = modifier.padding(bottom = 16.dp)
-            ) {
-                Text("Test")
-            }*/
         }
     }
 }
 
-private fun test(seed : String) {
+/*private fun test(seed : String) {
 
     // Seed for HMAC-SHA1 - 20 bytes
     val T0: kotlin.Long = 0
@@ -160,4 +163,4 @@ private fun test(seed : String) {
                 "------------------+--------+--------+"
     )
 
-}
+}*/

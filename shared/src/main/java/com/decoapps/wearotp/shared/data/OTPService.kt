@@ -5,6 +5,10 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class OTPService(
     val id: String,
-    val name: String? = null,
-    val token: String? = null
+    val issuer: String? = null,
+    val accountName: String? = null,
+    val secret: String,
+    val algorithm: String = "SHA1",
+    val digits: Int = 6,
+    val interval: Int = 30,
 )

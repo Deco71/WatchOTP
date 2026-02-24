@@ -32,7 +32,11 @@ class QrCodeAnalyzer(
                                 image.close()
                                 return@let
                             }
-                            barcodes[0].rawValue?.let(onQrCodeDetected)
+                            val barcode = barcodes[0]
+                            Log.d("QR Analyzer", "Detected ${barcode.rawValue} barcodes")
+                            if (barcode.rawValue?.startsWith("otpauth://") == true) {
+                                barcode.rawValue?.let(onQrCodeDetected)
+                            }
                         }
                     } else {
                         it.exception?.let { exception ->

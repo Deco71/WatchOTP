@@ -37,7 +37,7 @@ import com.decoapps.wearotp.shared.viewmodels.OTPCardViewModel
 fun OTPCard(
     service: OTPService,
     modifier: Modifier = Modifier,
-    viewModel: OTPCardViewModel = viewModel(key = service.id)
+    viewModel: OTPCardViewModel = viewModel(key = service.id, factory = OTPCardViewModel.factory(service))
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val animatedProgress by animateFloatAsState(
@@ -45,6 +45,7 @@ fun OTPCard(
         animationSpec = tween(durationMillis = 900, easing = LinearEasing),
         label = "timerProgress"
     )
+    val token by viewModel.token.collectAsState()
 
     Card(
         onClick = { },
@@ -86,14 +87,14 @@ fun OTPCard(
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
                 Text(
-                    text = service.name ?: "Unknown Service",
+                    text = service.issuer ?: "Unknown Service",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = viewModel.formatToken(service.token ?: "------"),
+                    text = viewModel.formatToken(viewModel.formatToken(token)),
                     style = MaterialTheme.typography.labelLarge.copy(
                         fontFamily = FontFamily.Monospace,
                         letterSpacing = 2.sp

@@ -47,10 +47,12 @@ fun OTPCard(
     service: OTPService,
     modifier: Modifier = Modifier,
     onDelete: ((OTPService) -> Unit)? = null,
-    viewModel: OTPCardViewModel = viewModel(key = service.id)
+    viewModel: OTPCardViewModel = viewModel(key = service.id, factory = OTPCardViewModel.factory(service))
 ) {
     val context = LocalContext.current
     val uiState by viewModel.uiState.collectAsState()
+
+    val token by viewModel.token.collectAsState()
 
     val animatedProgress by animateFloatAsState(
         targetValue = uiState.timeProgress,
@@ -78,8 +80,8 @@ fun OTPCard(
 
     Card(
         modifier = modifier.combinedClickable(
-            onClick = { viewModel.onCardClick(context, service) },
-            onLongClick = { viewModel.onCardLongClick(service) }
+            onClick = { viewModel.onCardClick(context) },
+            onLongClick = { viewModel.onCardLongClick() }
         ),
         shape = CardDefaults.shape,
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
@@ -126,15 +128,29 @@ fun OTPCard(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                Text(
-                    text = service.name ?: "Unknown Service",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        text = service.issuer ?: "Unknown Service",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1
+                    )
+                    if (service.accountName?.isEmpty() == false) {
+                        Text(
+                            text = ("(" + service.accountName + ")"),
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 1
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = viewModel.formatToken(service.token ?: "------"),
+                    text = viewModel.formatToken(viewModel.formatToken(token)),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = FontFamily.Monospace,
                         letterSpacing = 4.sp
