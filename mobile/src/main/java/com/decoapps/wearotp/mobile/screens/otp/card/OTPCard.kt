@@ -50,21 +50,24 @@ fun OTPCard(
     viewModel: OTPCardViewModel = viewModel(key = service.id, factory = OTPCardViewModel.factory(service))
 ) {
     val context = LocalContext.current
-    val uiState by viewModel.uiState.collectAsState()
+    val timeProgress by viewModel.timeProgress.collectAsState()
+    val progressColorLevel by viewModel.progressColorLevel.collectAsState()
+    val showDeleteDialog by viewModel.showDeleteDialog.collectAsState()
+    val deleteDialogServiceName by viewModel.deleteDialogServiceName.collectAsState()
 
     val token by viewModel.token.collectAsState()
 
     val animatedProgress by animateFloatAsState(
-        targetValue = uiState.timeProgress,
+        targetValue = timeProgress,
         animationSpec = tween(durationMillis = 900, easing = LinearEasing),
         label = "timerProgress"
     )
 
-    if (uiState.showDeleteDialog) {
+    if (showDeleteDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.onDeleteDismissed() },
             title = { Text("Remove Service") },
-            text = { Text("Are you sure you want to remove \"${uiState.deleteDialogServiceName}\"?") },
+            text = { Text("Are you sure you want to remove \"$deleteDialogServiceName\"?") },
             confirmButton = {
                 TextButton(onClick = { viewModel.onDeleteConfirmed(service, onDelete) }) {
                     Text("Confirm", color = MaterialTheme.colorScheme.error)
@@ -101,7 +104,7 @@ fun OTPCard(
                     modifier = Modifier.size(56.dp),
                     strokeWidth = 3.dp,
                     strokeCap = StrokeCap.Round,
-                    color = when (uiState.progressColorLevel) {
+                    color = when (progressColorLevel) {
                         ProgressColorLevel.CRITICAL -> MaterialTheme.colorScheme.error
                         ProgressColorLevel.WARNING -> MaterialTheme.colorScheme.tertiary
                         ProgressColorLevel.NORMAL -> MaterialTheme.colorScheme.primary
@@ -162,4 +165,3 @@ fun OTPCard(
         }
     }
 }
-

@@ -39,11 +39,11 @@ fun OTPCard(
     modifier: Modifier = Modifier,
     viewModel: OTPCardViewModel = viewModel(key = service.id, factory = OTPCardViewModel.factory(service))
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val timeProgress by viewModel.timeProgress.collectAsState()
     val animatedProgress by animateFloatAsState(
-        targetValue = uiState.timeProgress,
+        targetValue = timeProgress,
         animationSpec = tween(durationMillis = 900, easing = LinearEasing),
-        label = "timerProgress"
+        label = "timerProgress" + service.id
     )
     val token by viewModel.token.collectAsState()
 

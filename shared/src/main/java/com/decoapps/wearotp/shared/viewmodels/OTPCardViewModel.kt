@@ -21,13 +21,6 @@ import java.util.Locale
 
 enum class ProgressColorLevel { CRITICAL, WARNING, NORMAL }
 
-data class OTPCardUiState(
-    val timeProgress: Float = 1f,
-    val showDeleteDialog: Boolean = false,
-    val deleteDialogServiceName: String = "",
-    val progressColorLevel: ProgressColorLevel = ProgressColorLevel.NORMAL
-)
-
 class OTPCardViewModel(val service: OTPService) : ViewModel() {
 
     companion object {
@@ -38,24 +31,26 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
             }
     }
 
-
     private val period = service.interval
 
-    private val _uiState = MutableStateFlow(OTPCardUiState())
-    val uiState: StateFlow<OTPCardUiState> = timerFlow(period)
+    val timeProgress: StateFlow<Float> = timerFlow(period)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 1f)
+
+    val progressColorLevel: StateFlow<ProgressColorLevel> = timerFlow(period)
         .map { progress ->
-            val level = when {
+            when {
                 progress < 0.2f -> ProgressColorLevel.CRITICAL
                 progress < 0.4f -> ProgressColorLevel.WARNING
                 else -> ProgressColorLevel.NORMAL
             }
-            OTPCardUiState(timeProgress = progress, progressColorLevel = level)
         }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = OTPCardUiState()
-        )
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), ProgressColorLevel.NORMAL)
+
+    private val _showDeleteDialog = MutableStateFlow(false)
+    val showDeleteDialog: StateFlow<Boolean> = _showDeleteDialog
+
+    private val _deleteDialogServiceName = MutableStateFlow("")
+    val deleteDialogServiceName: StateFlow<String> = _deleteDialogServiceName
 
     val token: StateFlow<String> = timerFlow(period)
         .map { progress ->
@@ -64,12 +59,10 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), getToken())
 
     private fun getToken(): String {
-
         val interval: kotlin.Long = service.interval.toLong()
-        var steps = "0"
         val epoch = Instant.now().epochSecond
         val T: kotlin.Long = epoch / interval
-        steps = Long.toHexString(T).uppercase(Locale.getDefault())
+        val steps = Long.toHexString(T).uppercase(Locale.getDefault())
         return TOTP.generateTOTP(service.secret, steps, service.digits.toString(), "Hmac" + service.algorithm)
     }
 
@@ -93,19 +86,17 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
     }
 
     fun onCardLongClick() {
-        _uiState.value = _uiState.value.copy(
-            showDeleteDialog = true,
-            deleteDialogServiceName = service.issuer ?: "service?"
-        )
+        _showDeleteDialog.value = true
+        _deleteDialogServiceName.value = service.issuer ?: "service?"
     }
 
     fun onDeleteConfirmed(service: OTPService, onDelete: ((OTPService) -> Unit)?) {
-        _uiState.value = _uiState.value.copy(showDeleteDialog = false)
+        _showDeleteDialog.value = false
         onDelete?.invoke(service)
     }
 
     fun onDeleteDismissed() {
-        _uiState.value = _uiState.value.copy(showDeleteDialog = false)
+        _showDeleteDialog.value = false
     }
 
     fun formatToken(token: String): String {
