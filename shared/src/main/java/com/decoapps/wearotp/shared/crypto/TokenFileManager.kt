@@ -4,11 +4,13 @@ import com.decoapps.wearotp.shared.data.OTPService
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class TokenFileManager(private val cryptoManager: CryptoManager) {
+class TokenFileManager {
 
     private val json = Json { prettyPrint = false }
 
     fun saveEncryptedToken(directory: File, service: OTPService): Boolean {
+        val cryptoManager = CryptoManager()
+
         return try {
             if (!directory.exists()) {
                 directory.mkdirs()
@@ -35,10 +37,13 @@ class TokenFileManager(private val cryptoManager: CryptoManager) {
     }
 
     fun loadEncryptedTokens(directory: File): List<OTPService> {
-        var files = try {
+        val cryptoManager = CryptoManager()
+        val files = try {
             if (!directory.exists()) {
                 return emptyList()
             }
+
+            //Log.d("Files in directory", directory.list()?.joinToString(", ") ?: "No files")
 
             directory.listFiles { file ->
                 file.isFile

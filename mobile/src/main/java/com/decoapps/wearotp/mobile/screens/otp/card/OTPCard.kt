@@ -73,7 +73,9 @@ fun OTPCard(
             animatedProgress.snapTo(timeProgress)
             isFirstFrame.value = false
         } else if(lastAnimatedValue.floatValue < timeProgress) {
-            animatedProgress.snapTo(timeProgress)
+            animatedProgress.animateTo(
+                targetValue = timeProgress,
+                animationSpec = tween(durationMillis = 100, easing = LinearEasing))
             animatedProgress.animateTo(
                 targetValue = (timeProgress - timeSkip),
                 animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)

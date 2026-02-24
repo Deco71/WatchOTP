@@ -3,7 +3,6 @@ package com.decoapps.wearotp.wear.screens.home
 import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.decoapps.wearotp.shared.crypto.CryptoManager
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
 import com.decoapps.wearotp.shared.data.OTPService
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -12,8 +11,7 @@ import kotlinx.coroutines.launch
 import java.io.File
 
 class OTPViewModel() : ViewModel() {
-    private val cryptoManager = CryptoManager()
-    private val tokenFileManager = TokenFileManager(cryptoManager)
+    private val tokenFileManager = TokenFileManager()
 
     private val _otpServices = MutableStateFlow<List<OTPService>>(emptyList())
     val otpServices: StateFlow<List<OTPService>> = _otpServices

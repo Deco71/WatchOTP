@@ -65,7 +65,7 @@ fun QrScanningScreen(navController: NavController) {
         imageAnalysis.setAnalyzer(
             Dispatchers.Default.asExecutor(),
             QrCodeAnalyzer { result ->
-                if (result?.startsWith("otpauth://") == true) {
+                if (result.startsWith("otpauth://")) {
                     when (val parsed = parseOtpauth(result)) {
                         is OtpauthParseResult.Success -> {
                             val fields = parsed.fields
