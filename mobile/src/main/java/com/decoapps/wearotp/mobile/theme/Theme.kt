@@ -7,7 +7,10 @@ import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.decoapps.wearotp.mobile.data.PreferencesViewModel
 import com.decoapps.wearotp.shared.theme.*
 
 private val lightScheme = lightColorScheme(
@@ -88,23 +91,33 @@ private val darkScheme = darkColorScheme(
 
 @Composable
 fun AppTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
     content: @Composable() () -> Unit
 ) {
-  val colorScheme = when {
-      dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+
+    val preferencesViewModel: PreferencesViewModel =
+        viewModel(factory = PreferencesViewModel.Factory)
+
+    val colorMode = preferencesViewModel.currentColorMode.collectAsState().value
+    val dynamicColor = colorMode == ColorMode.DYNAMIC.toString() && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
+    val darkTheme = when (colorMode) {
+        ColorMode.LIGHT.toString() -> false
+        ColorMode.DARK.toString() -> true
+        else -> isSystemInDarkTheme()
+    }
+
+    val colorScheme = when {
+      dynamicColor -> {
           val context = LocalContext.current
           if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
       }
-      
+
       darkTheme -> darkScheme
       else -> lightScheme
-  }
+    }
 
-  MaterialTheme(
-    colorScheme = colorScheme,
-    content = content
-  )
+    MaterialTheme(
+        colorScheme = colorScheme,
+        content = content
+    )
 }
 
