@@ -24,7 +24,7 @@ class OTPViewModel() : ViewModel() {
         }
     }
 
-    /*fun saveToken(service: OTPService, context: Context) {
+    fun saveToken(service: OTPService, context: Context) {
         viewModelScope.launch {
             val tokensDir = File(context.filesDir, "tokens")
             if (tokenFileManager.saveEncryptedToken(tokensDir, service)) {
@@ -42,5 +42,5 @@ class OTPViewModel() : ViewModel() {
                 loadTokensFromDirectory("tokens", context)
             }
         }
-    }*/
+    }
 }

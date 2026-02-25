@@ -52,12 +52,16 @@ fun OTPCard(
     val timeSkip = ((100/(service.interval)) * 0.01).toFloat()
     val animationTime = 900
 
+    val totp = viewModel.formatToken(viewModel.formatToken(token))
+
     LaunchedEffect(timeProgress) {
         if (isFirstFrame.value) {
             animatedProgress.snapTo(timeProgress)
             isFirstFrame.value = false
         } else if(lastAnimatedValue.floatValue < timeProgress) {
-            animatedProgress.snapTo(timeProgress)
+            animatedProgress.animateTo(
+                targetValue = timeProgress,
+                animationSpec = tween(durationMillis = 100, easing = LinearEasing))
             animatedProgress.animateTo(
                 targetValue = (timeProgress - timeSkip),
                 animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)
@@ -88,12 +92,12 @@ fun OTPCard(
             ) {
                 CircularProgressIndicator(
                     progress = { animatedProgress.value },
-                    modifier = Modifier.size(42.dp),
+                    modifier = Modifier.size(36.dp),
                     strokeWidth = 3.dp
                 )
                 Box(
                     modifier = Modifier
-                        .size(32.dp)
+                        .size(28.dp)
                         .clip(CircleShape)
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
@@ -102,7 +106,7 @@ fun OTPCard(
                         imageVector = Icons.Default.Key,
                         contentDescription = "Service icon",
                         tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(22.dp)
+                        modifier = Modifier.size(16.dp)
                     )
                 }
             }
@@ -119,14 +123,16 @@ fun OTPCard(
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = viewModel.formatToken(viewModel.formatToken(token)),
-                    style = MaterialTheme.typography.labelLarge.copy(
+                    text = totp,
+                    style = if (totp.length > 7) {MaterialTheme.typography.labelMedium.copy(
                         fontFamily = FontFamily.Monospace,
                         letterSpacing = 2.sp
-                    ),
+                    )} else {MaterialTheme.typography.labelLarge.copy(
+                        fontFamily = FontFamily.Monospace,
+                        letterSpacing = 2.sp
+                    )},
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Bold,
-                    maxLines = 1
                 )
             }
         }

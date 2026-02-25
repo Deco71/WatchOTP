@@ -25,12 +25,20 @@ import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.ScrollIndicator
 import androidx.wear.compose.material3.ScrollIndicatorColors
 import androidx.wear.compose.material3.Text
+import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.screens.card.OTPCard
 
 @Composable
 fun OTPList(modifier: Modifier) {
     val otpViewModel: OTPViewModel =
         viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
+
+    val preferencesViewModel : PreferencesViewModel = viewModel(
+        viewModelStoreOwner = LocalActivity.current as ComponentActivity,
+        factory = PreferencesViewModel.Factory
+    )
+
+    val lastSync by preferencesViewModel.currentLastSync.collectAsStateWithLifecycle()
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(Unit) {
@@ -55,7 +63,6 @@ fun OTPList(modifier: Modifier) {
             modifier = Modifier
                 .fillMaxSize(),
             contentPadding = PaddingValues(horizontal = 8.dp),
-//            verticalArrangement = Arrangement.spacedBy(8.dp),
             state = listState,
             flingBehavior = ScalingLazyColumnDefaults.snapFlingBehavior(state = listState),
         ) {
@@ -77,7 +84,7 @@ fun OTPList(modifier: Modifier) {
             }
             item{
                 Text(
-                    text = "Last Sync: boh", //TODO: add last sync time
+                    text = "Last Sync: ${lastSync ?: "Never"}",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

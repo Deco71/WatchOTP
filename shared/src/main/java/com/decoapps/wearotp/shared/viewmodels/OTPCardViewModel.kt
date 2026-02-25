@@ -15,7 +15,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import java.lang.Long
 import java.time.Instant
 import java.util.Locale
 
@@ -25,6 +24,7 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
 
     companion object {
         fun factory(service: OTPService): ViewModelProvider.Factory =
+            @Suppress("UNCHECKED_CAST")
             object : ViewModelProvider.Factory {
                 override fun <T : ViewModel> create(modelClass: Class<T>): T =
                     OTPCardViewModel(service) as T
@@ -59,10 +59,10 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), getToken())
 
     private fun getToken(): String {
-        val interval: kotlin.Long = service.interval.toLong()
+        val interval: Long = service.interval.toLong()
         val epoch = Instant.now().epochSecond
-        val T: kotlin.Long = epoch / interval
-        val steps = Long.toHexString(T).uppercase(Locale.getDefault())
+        val T: Long = epoch / interval
+        val steps = T.toHexString().uppercase(Locale.getDefault())
         return TOTP.generateTOTP(service.secret, steps, service.digits.toString(), "Hmac" + service.algorithm)
     }
 

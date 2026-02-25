@@ -42,6 +42,9 @@ dependencies {
     implementation(project(":shared"))
     implementation(libs.androidx.compose.ui)
     implementation(libs.androidx.material3)
+    implementation(libs.play.services.wearable)
+    implementation(libs.androidx.datastore.core)
+    implementation(libs.datastore.preferences)
 
     val composeBom = platform("androidx.compose:compose-bom:2026.01.01")
 
