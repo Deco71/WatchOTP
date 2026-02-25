@@ -1,5 +1,7 @@
 # WearOTP
 
+> ⚠️ **Work in Progress** — This app is not production-ready and should **not** be used to securely store TOTP tokens at this stage.
+
 A TOTP authenticator for Android and Wear OS. Manage your two-factor authentication codes on your phone and view them directly on your wrist.
 
 ## Features
@@ -29,4 +31,11 @@ shared/   # Common logic: OTP generation, crypto, data models
 - Android **API 30+**, Target SDK 36
 - Wear OS **API 30+**, Target SDK 36
 - `CAMERA` permission for QR scanning
+
+## Work in Progress
+
+- 🔄 **Background sync** — automatic synchronization of OTP tokens in the background is not yet implemented
+- 🔒 **Secure sync** — the data sent from the phone to the watch is not yet end-to-end encrypted during transit
+
+(Yes, this readme is AI generated 😉)
 
