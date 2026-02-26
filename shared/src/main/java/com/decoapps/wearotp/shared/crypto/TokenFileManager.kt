@@ -1,10 +1,17 @@
 package com.decoapps.wearotp.shared.crypto
 
+import android.util.Log
 import com.decoapps.wearotp.shared.data.OTPService
 import kotlinx.serialization.json.Json
 import java.io.File
 
 class TokenFileManager {
+
+    companion object {
+        fun getTokensDirectory(baseDir: File): File {
+            return File(baseDir, "tokens")
+        }
+    }
 
     private val json = Json { prettyPrint = false }
 
@@ -16,7 +23,12 @@ class TokenFileManager {
                 directory.mkdirs()
             }
 
-            print(service.id)
+            //check if file with same id already exists
+            if (File(directory, service.id).exists()) {
+                Log.d("TokenFileManager", "File with id ${service.id} already exists, skipping save.")
+                return true
+            }
+
             val filename = service.id
             val tokenFile = File(directory, filename)
 
@@ -69,7 +81,8 @@ class TokenFileManager {
         return files
     }
 
-    fun deleteToken(file: File): Boolean {
+    fun deleteToken(directory: File, id: String): Boolean {
+        val file = File(directory, id)
         return try {
             file.delete()
         } catch (e: Exception) {

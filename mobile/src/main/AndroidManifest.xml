@@ -15,7 +15,6 @@
         android:icon="@mipmap/wearotp_icon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/wearotp_icon_round"
-        android:supportsRtl="true"
         android:theme="@style/Theme.WearOTP">
 
         <activity

@@ -11,7 +11,6 @@ import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
-import java.io.File
 
 class OTPViewModel() : ViewModel() {
     private val tokenFileManager = TokenFileManager()
@@ -19,9 +18,9 @@ class OTPViewModel() : ViewModel() {
     private val _otpServices = MutableStateFlow<List<OTPService>>(emptyList())
     val otpServices: StateFlow<List<OTPService>> = _otpServices
 
-    fun loadTokensFromDirectory(directoryName: String, context: Context) {
+    fun loadTokensFromDirectory(context: Context) {
         viewModelScope.launch {
-            val tokensDir = File(context.filesDir, directoryName)
+            val tokensDir = TokenFileManager.getTokensDirectory(context.filesDir)
             val services = tokenFileManager.loadEncryptedTokens(tokensDir)
             _otpServices.value = services
         }
@@ -29,21 +28,20 @@ class OTPViewModel() : ViewModel() {
 
     fun saveToken(service: OTPService, context: Context) {
         viewModelScope.launch {
-            val tokensDir = File(context.filesDir, "tokens")
-            sendToWearable(context, service)
+            val tokensDir = TokenFileManager.getTokensDirectory(context.filesDir)
             if (tokenFileManager.saveEncryptedToken(tokensDir, service)) {
-                loadTokensFromDirectory("tokens", context)
+                sendToWearable(context, service)
+                loadTokensFromDirectory(context)
             }
         }
     }
 
     fun deleteToken(tokenId: String, context: Context) {
         viewModelScope.launch {
-            val tokensDir = File(context.filesDir, "tokens")
-            val tokenFile = File(tokensDir, tokenId)
-            if (tokenFileManager.deleteToken(tokenFile)) {
-                // Ricarica i token dopo la cancellazione
-                loadTokensFromDirectory("tokens", context)
+            val tokensDir = TokenFileManager.getTokensDirectory(context.filesDir)
+            if (tokenFileManager.deleteToken(tokensDir, tokenId)) {
+                removeToWearable(context, tokenId)
+                loadTokensFromDirectory(context)
             }
         }
     }
@@ -72,6 +70,28 @@ class OTPViewModel() : ViewModel() {
                     }
             } catch (e: Exception) {
                 Log.e("OTPViewModel", "Error connecting to wearable: ${e.message}")
+            }
+        }
+    }
+
+    fun removeToWearable(context: Context, tokenId: String) {
+        viewModelScope.launch {
+            try {
+                val putDataMapReq = PutDataMapRequest.create("/delete-token").apply {
+                    dataMap.putString("id", tokenId)
+                    dataMap.putLong("timestamp", System.currentTimeMillis())
+                }
+                val request = putDataMapReq.asPutDataRequest().setUrgent()
+
+                Wearable.getDataClient(context).putDataItem(request)
+                    .addOnSuccessListener {
+                        Log.d("OTPViewModel", "Successfully sent delete request to wearable for token: $tokenId")
+                    }
+                    .addOnFailureListener {
+                        Log.e("OTPViewModel", "Failed to connect to wearable for delete request: ${it.message}")
+                    }
+            } catch (e: Exception) {
+                Log.e("OTPViewModel", "Error connecting to wearable for delete request: ${e.message}")
             }
         }
     }

@@ -88,7 +88,7 @@ fun OTPList(modifier: Modifier) {
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        otpViewModel.loadTokensFromDirectory("tokens", context)
+        otpViewModel.loadTokensFromDirectory(context)
     }
     Box(
         modifier = modifier.fillMaxSize(),
@@ -106,61 +106,29 @@ fun OTPList(modifier: Modifier) {
                 contentPadding = PaddingValues(16.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                items(otpServices) { service ->
-                    OTPCard(
-                        service = service,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(bottom = 8.dp),
-                        onDelete = {
-                            otpViewModel.deleteToken(service.id, context)
-                        }
-                    )
-                }
-
-                /*item {
-                    Button(
-                        onClick = {
-                            test("K45F5LZPFG7ET5GGSWYOFS2RS5GOJIII")
-                        },
-                        modifier = modifier.padding(bottom = 16.dp)
-                    ) {
-                        Text("Test")
+                if (otpServices.isEmpty()) {
+                    item {
+                        Text(
+                            text = "No TOTP found. Please add one by using the add buton.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(vertical = 24.dp)
+                        )
                     }
-                }*/
+                } else {
+                    items(otpServices) { service ->
+                        OTPCard(
+                            service = service,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 8.dp),
+                            onDelete = {
+                                otpViewModel.deleteToken(service.id, context)
+                            }
+                        )
+                    }
+                }
             }
 
         }
     }
 }
-
-/*private fun test(seed : String) {
-
-    // Seed for HMAC-SHA1 - 20 bytes
-    val T0: kotlin.Long = 0
-    val X: kotlin.Long = 30
-
-    var steps = "0"
-    val df: DateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss")
-    df.timeZone = TimeZone.getTimeZone("UTC")
-    val epoch = Instant.now().epochSecond
-    val T: kotlin.Long = (epoch - T0) / X
-    steps = Long.toHexString(T).uppercase(Locale.getDefault())
-    val fmtTime = java.lang.String.format("%1$-11s", epoch)
-    val utcTime: String? = df.format(Date(epoch * 1000))
-    print(
-        "|  " + fmtTime + "  |  " + utcTime +
-                "  | " + steps + " |"
-    )
-    println(
-            generateTOTP(
-                seed, steps, "6",
-                "HmacSHA1"
-            ) + "| SHA1   |"
-        )
-    println(
-        "+---------------+-----------------------+" +
-                "------------------+--------+--------+"
-    )
-
-}*/

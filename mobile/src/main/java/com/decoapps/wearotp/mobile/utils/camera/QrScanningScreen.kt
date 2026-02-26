@@ -56,6 +56,7 @@ fun QrScanningScreen(navController: NavController) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
     val previewView = remember { PreviewView(context) }
+    val blockOtherQRs = remember { mutableStateOf(false) }
     val preview = Preview.Builder().build()
     val imageAnalysis: ImageAnalysis = ImageAnalysis.Builder()
         .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
@@ -68,6 +69,8 @@ fun QrScanningScreen(navController: NavController) {
                 if (result.startsWith("otpauth://")) {
                     when (val parsed = parseOtpauth(result)) {
                         is OtpauthParseResult.Success -> {
+                            if (blockOtherQRs.value) return@QrCodeAnalyzer
+                            blockOtherQRs.value = true
                             val fields = parsed.fields
                             otpViewModel.saveToken(
                                 OTPService(

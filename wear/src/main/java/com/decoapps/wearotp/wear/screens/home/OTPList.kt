@@ -25,9 +25,9 @@ import androidx.wear.compose.material3.ScreenScaffold
 import androidx.wear.compose.material3.ScrollIndicator
 import androidx.wear.compose.material3.ScrollIndicatorColors
 import androidx.wear.compose.material3.Text
+import com.decoapps.wearotp.shared.utils.formatLastSync
 import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.screens.card.OTPCard
-
 @Composable
 fun OTPList(modifier: Modifier) {
     val otpViewModel: OTPViewModel =
@@ -42,7 +42,7 @@ fun OTPList(modifier: Modifier) {
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
     val context = LocalContext.current
     LaunchedEffect(Unit) {
-        otpViewModel.loadTokensFromDirectory("tokens", context)
+        otpViewModel.loadTokensFromDirectory(context)
     }
 
     val listState = rememberScalingLazyListState()
@@ -66,7 +66,7 @@ fun OTPList(modifier: Modifier) {
             state = listState,
             flingBehavior = ScalingLazyColumnDefaults.snapFlingBehavior(state = listState),
         ) {
-            item{
+            item {
                 Text(
                     text = "WearOTP",
                     style = MaterialTheme.typography.titleMedium,
@@ -75,16 +75,29 @@ fun OTPList(modifier: Modifier) {
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                 )
             }
-            items(otpServices, key = {it.id}) { service ->
-                OTPCard(
-                    service = service,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                )
+            if (otpServices.isEmpty()) {
+                item {
+                    Text(
+                        text = "No TOTP found. Please add one on your phone, it will magically appear here!",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 16.dp)
+                    )
+                }
+            } else {
+                items(otpServices, key = { it.id }) { service ->
+                    OTPCard(
+                        service = service,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                    )
+                }
             }
-            item{
+            item {
                 Text(
-                    text = "Last Sync: ${lastSync ?: "Never"}",
+                    text = "Last Sync: ${formatLastSync(lastSync, context)}",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -95,4 +108,5 @@ fun OTPList(modifier: Modifier) {
             }
         }
     }
+
 }

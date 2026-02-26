@@ -12,10 +12,6 @@ import com.decoapps.wearotp.mobile.utils.camera.QrScanningScreen
 @OptIn(ExperimentalGetImage::class)
 @Composable
 fun AddOTPScreen(modifier: Modifier = Modifier, navController: NavController) {
-    /*val serviceName = remember { mutableStateOf("") }
-    val secretToken = remember { mutableStateOf("") }
-    val otpViewModel: OTPViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
-    val context = LocalContext.current*/
     Box(
         modifier = modifier.fillMaxSize()
     ) {

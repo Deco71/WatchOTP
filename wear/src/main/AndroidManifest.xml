@@ -9,7 +9,6 @@
         android:icon="@mipmap/wearotp_icon"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/wearotp_icon_round"
-        android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault" >
         <uses-library
             android:name="com.google.android.wearable"
@@ -29,6 +28,20 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".OTPUpdates"
+            android:exported="true">
+            <intent-filter>
+                <!-- listeners receive events that match the action and data filters -->
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data android:scheme="wear" />
+                <data android:host="*" />
+                <data android:pathPrefix="/create-token" />
+                <data android:scheme="wear" />
+                <data android:host="*" />
+                <data android:pathPrefix="/delete-token" />
+            </intent-filter>
+        </service>
 
     </application>
 
