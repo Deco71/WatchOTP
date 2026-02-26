@@ -34,7 +34,6 @@ shared/   # Common logic: OTP generation, crypto, data models
 
 ## Work in Progress
 
-- 🔄 **Background sync** — automatic synchronization of OTP tokens in the background is not yet implemented
 - 🔒 **Secure sync** — the data sent from the phone to the watch is not yet end-to-end encrypted during transit
 
 (Yes, this readme is AI generated 😉)
