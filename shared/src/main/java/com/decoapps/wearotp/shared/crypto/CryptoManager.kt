@@ -18,14 +18,16 @@ class CryptoManager {
         load(null)
     }
 
-    private val encryptCipher = Cipher.getInstance(TRANSFORMATION).apply {
-        init(Cipher.ENCRYPT_MODE, getKey(keystoreAlias))
+    private val cipher = Cipher.getInstance(TRANSFORMATION)
+
+    private fun getEncryptCipher() : Cipher {
+        cipher.init(Cipher.ENCRYPT_MODE, getKey(keystoreAlias))
+        return cipher
     }
 
     private fun getDecryptCipherForIv(iv: ByteArray): Cipher {
-        return Cipher.getInstance(TRANSFORMATION).apply {
-            init(Cipher.DECRYPT_MODE, getKey(keystoreAlias), IvParameterSpec(iv))
-        }
+        cipher.init(Cipher.DECRYPT_MODE, getKey(keystoreAlias), IvParameterSpec(iv))
+        return cipher
     }
 
     private fun getKey(alias: String): SecretKey {
@@ -50,6 +52,7 @@ class CryptoManager {
     }
 
     fun encrypt(bytes: ByteArray, outputStream: OutputStream): ByteArray {
+        val encryptCipher = getEncryptCipher()
         val encryptedBytes = encryptCipher.doFinal(bytes)
         outputStream.use {
             it.write(encryptCipher.iv.size)
@@ -74,17 +77,18 @@ class CryptoManager {
         }
     }
 
-    /*fun encrypt(bytes: ByteArray): ByteArray {
+    fun encrypt(bytes: ByteArray): ByteArray {
+        val encryptCipher = getEncryptCipher()
         val iv = encryptCipher.iv
         val encrypted = encryptCipher.doFinal(bytes)
-        return iv + encrypted;
+        return iv + encrypted
     }
 
     fun decrypt(bytes: ByteArray): ByteArray {
-        val iv = bytes.copyOfRange(0, encryptCipher.blockSize)
-        val data = bytes.copyOfRange(encryptCipher.blockSize, bytes.size)
+        val iv = bytes.copyOfRange(0, cipher.blockSize)
+        val data = bytes.copyOfRange(cipher.blockSize, bytes.size)
         return getDecryptCipherForIv(iv).doFinal(data)
-    }*/
+    }
 
     companion object {
         private const val ALGORITHM = KeyProperties.KEY_ALGORITHM_AES

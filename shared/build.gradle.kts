@@ -39,6 +39,7 @@ dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
     testImplementation(libs.junit)
+    implementation(libs.datastore.preferences)
     implementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)

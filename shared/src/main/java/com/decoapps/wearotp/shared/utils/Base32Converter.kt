@@ -1,4 +1,4 @@
-package com.decoapps.wearotp.shared.data
+package com.decoapps.wearotp.shared.utils
 
 
 fun base32ToHex(base32: String): String {

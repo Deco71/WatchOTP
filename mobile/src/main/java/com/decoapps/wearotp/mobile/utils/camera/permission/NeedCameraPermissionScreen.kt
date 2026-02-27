@@ -15,9 +15,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import com.decoapps.wearotp.mobile.screens.Screen
 
 @Composable
-fun NeedCameraPermissionScreen(requestPermission: () -> Unit) {
+fun NeedCameraPermissionScreen(requestPermission: () -> Unit, navController: NavController) {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -47,7 +49,10 @@ fun NeedCameraPermissionScreen(requestPermission: () -> Unit) {
             color = MaterialTheme.colorScheme.onSurface
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { /* Navigate to manual OTP entry screen */ }) {
+        Button(onClick = {
+            navController.popBackStack()
+            navController.navigate(Screen.AddOTPManually.route)
+        }) {
             Text("Add Manually")
         }
     }

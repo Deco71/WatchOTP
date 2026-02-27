@@ -112,7 +112,8 @@ fun QrScanningScreen(navController: NavController) {
     RequireCameraPermission(
         deniedContent = { _, requestPermission ->
             NeedCameraPermissionScreen(
-                requestPermission = requestPermission
+                requestPermission = requestPermission,
+                navController = navController
             )
         },
         grantedContent = {

@@ -1,5 +1,6 @@
 package com.decoapps.wearotp.shared.data;
 
+import com.decoapps.wearotp.shared.utils.Base32ConverterKt;
 import java.lang.reflect.UndeclaredThrowableException;
 import java.security.GeneralSecurityException;
 import javax.crypto.Mac;
@@ -101,7 +102,7 @@ private static byte[] hmac_sha(String crypto, byte[] keyBytes,
         try {
             k = hexStr2Bytes(key);
         } catch (NumberFormatException e) {
-            var b32 = com.decoapps.wearotp.shared.data.Base32ConverterKt.base32ToHex(key);
+            var b32 = Base32ConverterKt.base32ToHex(key);
             k = hexStr2Bytes(b32);
         }
         // End of modified code from original specification

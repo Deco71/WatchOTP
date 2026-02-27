@@ -1,5 +1,6 @@
 package com.decoapps.wearotp.wear
 
+import android.content.Context
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -9,9 +10,17 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.datastore.dataStore
+import androidx.lifecycle.lifecycleScope
 import com.decoapps.wearotp.shared.crypto.TokenFileManager
+import com.decoapps.wearotp.shared.crypto.createRSAKeys
+import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferences
+import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferencesSerializer
 import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.data.elaborateDataItem
 import com.decoapps.wearotp.wear.data.removeDataItemFromWearable
@@ -22,7 +31,16 @@ import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.Wearable
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.io.File
+import java.util.Base64
+
+
+private val Context.dataStore by dataStore(
+    fileName = "crypto",
+    serializer = CryptoPreferencesSerializer
+)
 
 class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
@@ -38,15 +56,45 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
             WindowManager.LayoutParams.FLAG_SECURE,
             WindowManager.LayoutParams.FLAG_SECURE
         )
+
+        val keysReady = mutableStateOf(false)
+
+        lifecycleScope.launch {
+            val prefs = dataStore.data.first()
+            if (prefs.privateKeyBase64 == null || prefs.publicKeyBase64 == null) {
+                val keyPair = createRSAKeys()
+                if (keyPair != null) {
+                    val encoder = Base64.getEncoder()
+                    dataStore.updateData {
+                        CryptoPreferences(
+                            privateKeyBase64 = encoder.encodeToString(keyPair.private.encoded),
+                            publicKeyBase64 = encoder.encodeToString(keyPair.public.encoded)
+                        )
+                    }
+                    Log.d("CRYPTO", "RSA keys generated and saved.")
+                }
+            } else {
+                Log.d("CRYPTO", "RSA keys already exist.")
+            }
+            keysReady.value = true
+        }
+
         setContent {
             AppTheme() {
-                Box(
-                    modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
-                ) {
-                    OTPList(
-                        Modifier
-                    )
+                val ready by keysReady
+                if (!ready) {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
+                } else {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        OTPList(
+                            Modifier
+                        )
+                    }
                 }
             }
         }

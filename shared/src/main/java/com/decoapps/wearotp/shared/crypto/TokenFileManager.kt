@@ -7,6 +7,8 @@ import java.io.File
 
 class TokenFileManager {
 
+    val cryptoManager = CryptoManager()
+
     companion object {
         fun getTokensDirectory(baseDir: File): File {
             return File(baseDir, "tokens")
@@ -16,7 +18,6 @@ class TokenFileManager {
     private val json = Json { prettyPrint = false }
 
     fun saveEncryptedToken(directory: File, service: OTPService): Boolean {
-        val cryptoManager = CryptoManager()
 
         return try {
             if (!directory.exists()) {
@@ -49,13 +50,10 @@ class TokenFileManager {
     }
 
     fun loadEncryptedTokens(directory: File): List<OTPService> {
-        val cryptoManager = CryptoManager()
         val files = try {
             if (!directory.exists()) {
                 return emptyList()
             }
-
-            //Log.d("Files in directory", directory.list()?.joinToString(", ") ?: "No files")
 
             directory.listFiles { file ->
                 file.isFile
@@ -69,6 +67,10 @@ class TokenFileManager {
                     // Deserializza il JSON
                     val jsonString = String(decryptedBytes)
                     json.decodeFromString<OTPService>(jsonString)
+                } catch (e: NegativeArraySizeException) {
+                    Log.e("TokenFileManager", "Failed to decrypt file ${tokenFile.name}, removing it. Stack trace: ${e.stackTraceToString()}")
+                    tokenFile.delete()
+                    null
                 } catch (e: Exception) {
                     e.printStackTrace()
                     null
