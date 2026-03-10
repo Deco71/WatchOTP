@@ -23,7 +23,8 @@ import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferences
 import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferencesSerializer
 import com.decoapps.wearotp.wear.data.PreferencesViewModel
 import com.decoapps.wearotp.wear.data.elaborateDataItem
-import com.decoapps.wearotp.wear.data.removeDataItemFromWearable
+import com.decoapps.wearotp.wear.data.publishPublicKey
+import com.decoapps.wearotp.wear.data.removePendingDataItem
 import com.decoapps.wearotp.wear.screens.home.OTPList
 import com.decoapps.wearotp.wear.screens.home.OTPViewModel
 import com.decoapps.wearotp.wear.theme.AppTheme
@@ -76,6 +77,12 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
             } else {
                 Log.d("CRYPTO", "RSA keys already exist.")
             }
+
+            // Publish public key to dataStore to make it available for the mobile app
+            val updatedPrefs = dataStore.data.first()
+            updatedPrefs.publicKeyBase64?.let { publicKeyBase64 ->
+                publishPublicKey(this@MainActivity, publicKeyBase64)
+            }
             keysReady.value = true
         }
 
@@ -104,34 +111,38 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         super.onResume()
         dataClient.addListener(this)
 
-        Wearable.getDataClient(this)
-            .dataItems
-            .addOnSuccessListener { dataItemBuffer ->
-                var uriToRemove: List<Uri> = emptyList()
+        lifecycleScope.launch {
+            val cryptoPrefs = dataStore.data.first()
 
-                dataItemBuffer.forEach { dataItem ->
-                    elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir))
-                    dataItem.uri.let { uriToRemove = uriToRemove + it }
-                }
-                dataItemBuffer.release()
+            Wearable.getDataClient(this@MainActivity)
+                .dataItems
+                .addOnSuccessListener { dataItemBuffer ->
+                    var uriToRemove: List<Uri> = emptyList()
 
-                otpViewModel.loadTokensFromDirectory(this)
+                    dataItemBuffer.forEach { dataItem ->
+                        elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
+                        dataItem.uri.let { uriToRemove = uriToRemove + it }
+                    }
+                    dataItemBuffer.release()
 
-                val lastSyncFile = File(filesDir, "last_sync")
-                if (lastSyncFile.exists()) {
-                    lastSyncFile.readText().toLongOrNull()?.let { preferencesViewModel.saveLastSync(it) }
-                }
+                    otpViewModel.loadTokensFromDirectory(this@MainActivity)
 
-                Log.d("WATCH_CONNECTION", "Elaborated Uris to remove: ${uriToRemove.joinToString(", ")}")
-                if (uriToRemove.isNotEmpty()) {
-                    for (uri in uriToRemove) {
-                        removeDataItemFromWearable(this, uri)
+                    val lastSyncFile = File(filesDir, "last_sync")
+                    if (lastSyncFile.exists()) {
+                        lastSyncFile.readText().toLongOrNull()?.let { preferencesViewModel.saveLastSync(it) }
+                    }
+
+                    Log.d("WATCH_CONNECTION", "Elaborated Uris to remove: ${uriToRemove.joinToString(", ")}")
+                    if (uriToRemove.isNotEmpty()) {
+                        for (uri in uriToRemove) {
+                            removePendingDataItem(this@MainActivity, uri)
+                        }
                     }
                 }
-            }
-            .addOnFailureListener {
-                Log.e("WATCH_CONNECTION", "Failed to query data items: ${it.message}")
-            }
+                .addOnFailureListener {
+                    Log.e("WATCH_CONNECTION", "Failed to query data items: ${it.message}")
+                }
+        }
     }
 
     override fun onPause() {
@@ -141,25 +152,34 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
         Log.d("WATCH_CONNECTION", "Querying data changes")
-        var lastSync: Long? = null
 
-        var uriToRemove: List<Uri> = emptyList()
-
-        for (event in dataEvents) {
-            if (event.type == DataEvent.TYPE_CHANGED) {
-                lastSync = elaborateDataItem(event.dataItem, TokenFileManager.getTokensDirectory(filesDir))
-                event.dataItem.uri.let { uriToRemove = uriToRemove + it }
-            }
+        // Collect all events before async operation
+        val events = dataEvents.map { event ->
+            Pair(event.type, event.dataItem.freeze())
         }
+        dataEvents.release()
 
-        if (uriToRemove.isNotEmpty()) {
-            for (uri in uriToRemove) {
-                removeDataItemFromWearable(this, uri)
+        lifecycleScope.launch {
+            val cryptoPrefs = dataStore.data.first()
+            var lastSync: Long? = null
+            var uriToRemove: List<Uri> = emptyList()
+
+            for ((type, dataItem) in events) {
+                if (type == DataEvent.TYPE_CHANGED) {
+                    lastSync = elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
+                    uriToRemove = uriToRemove + dataItem.uri
+                }
             }
+
+            if (uriToRemove.isNotEmpty()) {
+                for (uri in uriToRemove) {
+                    removePendingDataItem(this@MainActivity, uri)
+                }
+            }
+
+            otpViewModel.loadTokensFromDirectory(this@MainActivity)
+
+            if (lastSync != null) preferencesViewModel.saveLastSync(lastSync)
         }
-
-        otpViewModel.loadTokensFromDirectory(this)
-
-        if (lastSync != null) preferencesViewModel.saveLastSync(lastSync)
     }
 }
