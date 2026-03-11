@@ -56,7 +56,7 @@ class OTPCardViewModel(val service: OTPService) : ViewModel() {
         .map { progress ->
             if (progress > 0.98f) getToken() else token.value
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), getToken())
+        .stateIn(viewModelScope, SharingStarted.Lazily, getToken())
 
     private fun getToken(): String {
         val interval: Long = service.interval.toLong()

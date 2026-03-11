@@ -2,6 +2,8 @@ package com.decoapps.wearotp.mobile.data
 
 import android.content.Context
 import android.util.Log
+import android.widget.Toast
+import com.decoapps.wearotp.shared.crypto.TokenFileManager
 import com.decoapps.wearotp.shared.crypto.rsaEncrypt
 import com.decoapps.wearotp.shared.data.OTPService
 import com.google.android.gms.wearable.DataMapItem
@@ -12,6 +14,7 @@ import java.security.PublicKey
 import java.security.spec.X509EncodedKeySpec
 import java.util.Base64
 
+//We must do this everytime since the wear app might be uninstalled at any time, in that case we must wait for the new public key to be published
 fun fetchWearPublicKey(context: Context, onResult: (PublicKey?) -> Unit) {
     Wearable.getDataClient(context)
         .dataItems
@@ -54,7 +57,7 @@ fun sendToWearable(context: Context, service: OTPService) {
                 // non-sensitive fields
                 dataMap.putString("issuer", service.issuer ?: "")
                 dataMap.putString("accountName", service.accountName ?: "")
-                dataMap.putLong("timestamp", System.currentTimeMillis())
+                dataMap.putLong("timestamp", service.lastUpdate)
 
                 // sensitive fields
                 dataMap.putString("secret", encoder.encodeToString(rsaEncrypt(service.secret, publicKey)))
@@ -96,11 +99,46 @@ fun removeToWearable(context: Context, tokenId: String) {
     }
 }
 
-/*fun syncData() {
-    try {
-        // Implement any additional synchronization logic if needed
-        Log.d("DataEventUtils", "Data synchronization completed successfully.")
-    } catch (e: Exception) {
-        Log.e("DataEventUtils", "Error during data synchronization: ${e.message}")
+fun syncData(context: Context) {
+    val tokenFileManager = TokenFileManager()
+
+    fetchWearPublicKey(context) { publicKey ->
+        if (publicKey == null) {
+            Log.e(
+                "DataEventUtils",
+                "Cannot sync: wearable public key not available."
+            )
+            Toast.makeText(context,
+                "Sync failed! Please open the smartwatch app at least once.",
+                Toast.LENGTH_SHORT).show()
+            return@fetchWearPublicKey
+        }
+        val loadedServices = tokenFileManager.loadEncryptedTokens(TokenFileManager.getTokensDirectory(context.filesDir))
+        try {
+            val putDataMapReq = PutDataMapRequest.create("/sync").apply {
+                dataMap.putLong("timestamp", System.currentTimeMillis())
+                dataMap.putStringArray("allTokenIds", loadedServices.map { it.id }.toTypedArray())
+            }
+            val request = putDataMapReq.asPutDataRequest().setUrgent()
+
+            Wearable.getDataClient(context).putDataItem(request)
+                .addOnSuccessListener {
+                    Log.d("DataEventUtils", "Successfully sent sync list to wearable")
+                    for (service in loadedServices) {
+                        sendToWearable(context, service)
+                    }
+                    Toast.makeText(context,
+                        "Sync successful!",
+                        Toast.LENGTH_SHORT).show()
+                }
+                .addOnFailureListener {
+                    Log.e("DataEventUtils", "Failed to send sync list to wearable: ${it.message}")
+                    Toast.makeText(context,
+                        "Sync failed with generic error!",
+                        Toast.LENGTH_SHORT).show()
+                }
+        } catch (e: Exception) {
+            Log.e("DataEventUtils", "Error sending message: ${e.message}")
+        }
     }
-}*/
+}

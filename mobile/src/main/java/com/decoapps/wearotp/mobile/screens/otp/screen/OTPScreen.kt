@@ -36,16 +36,6 @@ import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.screens.Screen
 import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.screens.otp.card.OTPCard
-/*import com.decoapps.wearotp.shared.data.TOTP.generateTOTP
-import java.lang.Long
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
-import java.util.TimeZone
-import kotlin.String
-import kotlin.text.uppercase
-import java.time.Instant*/
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,6 +76,7 @@ fun OTPScreen(navController: NavController) {
 fun OTPList(modifier: Modifier) {
     val otpViewModel: OTPViewModel = viewModel(viewModelStoreOwner = LocalActivity.current as ComponentActivity)
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
+    val sortedOtpServices = otpServices.sortedBy { it.lastUpdate }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         otpViewModel.loadTokensFromDirectory(context)
@@ -115,7 +106,7 @@ fun OTPList(modifier: Modifier) {
                         )
                     }
                 } else {
-                    items(otpServices) { service ->
+                    items(sortedOtpServices) { service ->
                         OTPCard(
                             service = service,
                             modifier = Modifier

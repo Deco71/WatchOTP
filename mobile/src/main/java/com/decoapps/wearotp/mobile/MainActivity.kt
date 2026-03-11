@@ -1,5 +1,6 @@
 package com.decoapps.wearotp.mobile
 
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.view.WindowManager
@@ -9,7 +10,9 @@ import androidx.activity.viewModels
 import com.decoapps.wearotp.mobile.screens.NavigationStack
 import com.decoapps.wearotp.mobile.screens.otp.OTPViewModel
 import com.decoapps.wearotp.mobile.theme.AppTheme
+import com.decoapps.wearotp.mobile.data.syncData
 import com.google.android.gms.wearable.DataClient
+import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
 import com.google.android.gms.wearable.Wearable
 import kotlin.getValue
@@ -38,11 +41,9 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         Wearable.getDataClient(this)
             .dataItems
             .addOnSuccessListener { dataItemBuffer ->
-                dataItemBuffer.forEach { dataItem ->
-                    Log.d("WATCH_CONNECTION", "Elaborating DataItem: ${dataItem.uri}")
-                    //elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir))
-                }
+                val uri = dataItemBuffer.firstOrNull { it.uri.path?.startsWith("/initial-sync") == true }?.uri
                 dataItemBuffer.release()
+                if (uri != null) handleInitialSync(uri)
             }
     }
 
@@ -52,13 +53,26 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
     }
 
     override fun onDataChanged(dataEvents: DataEventBuffer) {
-        Log.d("WATCH_CONNECTION", "Querying data changes (mobile)")
-
         for (event in dataEvents) {
             Log.d("WATCH_CONNECTION", "Received data change event: ${event.type} for URI: ${event.dataItem.uri}")
-            /*if (event.type == DataEvent.TYPE_CHANGED)
-                elaborateDataItem(event.dataItem)*/
+            if (event.type == DataEvent.TYPE_CHANGED &&
+                event.dataItem.uri.path?.startsWith("/initial-sync") == true
+            ) {
+                handleInitialSync(event.dataItem.uri)
+            }
         }
+    }
+
+    private fun handleInitialSync(uri: Uri) {
+        Log.d("WATCH_CONNECTION", "Wear app requested initial sync — starting sync")
+        syncData(this)
+        Wearable.getDataClient(this).deleteDataItems(uri)
+            .addOnSuccessListener {
+                Log.d("OTPViewModel", "Successfully removed data item with URI: $uri")
+            }
+            .addOnFailureListener {
+                Log.e("OTPViewModel", "Failed to remove data item with URI: $uri, error: ${it.message}")
+            }
 
     }
 }

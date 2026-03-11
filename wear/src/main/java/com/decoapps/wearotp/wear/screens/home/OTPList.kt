@@ -40,6 +40,7 @@ fun OTPList(modifier: Modifier) {
 
     val lastSync by preferencesViewModel.currentLastSync.collectAsStateWithLifecycle()
     val otpServices by otpViewModel.otpServices.collectAsStateWithLifecycle()
+    val sortedOtpServices = otpServices.sortedBy { it.lastUpdate }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         otpViewModel.loadTokensFromDirectory(context)
@@ -78,16 +79,30 @@ fun OTPList(modifier: Modifier) {
             if (otpServices.isEmpty()) {
                 item {
                     Text(
-                        text = "No TOTP found. Please add one on your phone, it will magically appear here!",
+                        text = "No TOTP found. Please add one on your mobile app.",
                         style = MaterialTheme.typography.bodyMedium,
                         textAlign = TextAlign.Center,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp)
+                            .padding(vertical = 6.dp, horizontal = 6.dp)
                     )
                 }
+
+                if (lastSync == null) {
+                    item {
+                        Text(
+                            text = "Open the mobile app once to start automatic synchronization.",
+                            style = MaterialTheme.typography.bodyExtraSmall,
+                            textAlign = TextAlign.Center,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 6.dp)
+                        )
+                    }
+                }
             } else {
-                items(otpServices, key = { it.id }) { service ->
+                items(sortedOtpServices, key = { it.id }) { service ->
                     OTPCard(
                         service = service,
                         modifier = Modifier
@@ -95,16 +110,18 @@ fun OTPList(modifier: Modifier) {
                     )
                 }
             }
-            item {
-                Text(
-                    text = "Last Sync: ${formatLastSync(lastSync, context)}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 16.dp)
-                )
+            if (lastSync != null) {
+                item {
+                    Text(
+                        text = "Last Sync: ${formatLastSync(lastSync, context)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 16.dp)
+                    )
+                }
             }
         }
     }

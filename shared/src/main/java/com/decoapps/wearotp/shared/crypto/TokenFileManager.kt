@@ -26,8 +26,8 @@ class TokenFileManager {
 
             //check if file with same id already exists
             if (File(directory, service.id).exists()) {
-                Log.d("TokenFileManager", "File with id ${service.id} already exists, skipping save.")
-                return true
+                Log.d("TokenFileManager", "File with id ${service.id} already exists, removing it in order to update.")
+                deleteToken(directory, service.id)
             }
 
             val filename = service.id

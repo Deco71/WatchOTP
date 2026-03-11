@@ -31,10 +31,11 @@ import com.decoapps.wearotp.wear.theme.AppTheme
 import com.google.android.gms.wearable.DataClient
 import com.google.android.gms.wearable.DataEvent
 import com.google.android.gms.wearable.DataEventBuffer
+import com.google.android.gms.wearable.DataItem
+import com.google.android.gms.wearable.DataMapItem
 import com.google.android.gms.wearable.Wearable
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.io.File
 import java.util.Base64
 
 
@@ -66,23 +67,23 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
                 val keyPair = createRSAKeys()
                 if (keyPair != null) {
                     val encoder = Base64.getEncoder()
+                    val publicKeyBase64 = encoder.encodeToString(keyPair.public.encoded)
                     dataStore.updateData {
                         CryptoPreferences(
                             privateKeyBase64 = encoder.encodeToString(keyPair.private.encoded),
-                            publicKeyBase64 = encoder.encodeToString(keyPair.public.encoded)
+                            publicKeyBase64 = publicKeyBase64
                         )
                     }
                     Log.d("CRYPTO", "RSA keys generated and saved.")
+
+                    // Publish public key to dataStore to make it available for the mobile app
+                    publishPublicKey(this@MainActivity, publicKeyBase64)
+
                 }
             } else {
                 Log.d("CRYPTO", "RSA keys already exist.")
             }
 
-            // Publish public key to dataStore to make it available for the mobile app
-            val updatedPrefs = dataStore.data.first()
-            updatedPrefs.publicKeyBase64?.let { publicKeyBase64 ->
-                publishPublicKey(this@MainActivity, publicKeyBase64)
-            }
             keysReady.value = true
         }
 
@@ -107,36 +108,50 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         }
     }
 
+    private suspend fun processDataItems(items: Iterable<DataItem>) {
+        val cryptoPrefs = dataStore.data.first()
+        var uriToRemove: List<Uri> = emptyList()
+        var lastSync: Long? = null
+
+        val sortedItems = items
+            .map { it to DataMapItem.fromDataItem(it).dataMap.getLong("timestamp", 0L) }
+            .sortedBy { it.second }
+            .map { it.first }
+
+
+        sortedItems.forEach { dataItem ->
+            val successfulSyncTime = elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
+            if (successfulSyncTime != null && dataItem.uri.path?.startsWith("/public-key") == false) {
+                uriToRemove = uriToRemove + dataItem.uri
+            }
+            if (successfulSyncTime != null) {
+                if (lastSync == null || successfulSyncTime > lastSync) {
+                    lastSync = successfulSyncTime
+                }
+            }
+        }
+
+        Log.d("WATCH_CONNECTION", "Elaborated Uris to remove: ${uriToRemove.joinToString(", ")}")
+        for (uri in uriToRemove) {
+            removePendingDataItem(this@MainActivity, uri)
+        }
+
+        otpViewModel.loadTokensFromDirectory(this@MainActivity)
+
+        if (lastSync != null) preferencesViewModel.saveLastSync(lastSync)
+    }
+
     override fun onResume() {
         super.onResume()
         dataClient.addListener(this)
 
         lifecycleScope.launch {
-            val cryptoPrefs = dataStore.data.first()
-
             Wearable.getDataClient(this@MainActivity)
                 .dataItems
                 .addOnSuccessListener { dataItemBuffer ->
-                    var uriToRemove: List<Uri> = emptyList()
-
-                    dataItemBuffer.forEach { dataItem ->
-                        elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
-                        dataItem.uri.let { uriToRemove = uriToRemove + it }
-                    }
-                    dataItemBuffer.release()
-
-                    otpViewModel.loadTokensFromDirectory(this@MainActivity)
-
-                    val lastSyncFile = File(filesDir, "last_sync")
-                    if (lastSyncFile.exists()) {
-                        lastSyncFile.readText().toLongOrNull()?.let { preferencesViewModel.saveLastSync(it) }
-                    }
-
-                    Log.d("WATCH_CONNECTION", "Elaborated Uris to remove: ${uriToRemove.joinToString(", ")}")
-                    if (uriToRemove.isNotEmpty()) {
-                        for (uri in uriToRemove) {
-                            removePendingDataItem(this@MainActivity, uri)
-                        }
+                    lifecycleScope.launch {
+                        processDataItems(dataItemBuffer)
+                        dataItemBuffer.release()
                     }
                 }
                 .addOnFailureListener {
@@ -154,32 +169,13 @@ class MainActivity : ComponentActivity(), DataClient.OnDataChangedListener {
         Log.d("WATCH_CONNECTION", "Querying data changes")
 
         // Collect all events before async operation
-        val events = dataEvents.map { event ->
-            Pair(event.type, event.dataItem.freeze())
-        }
+        val events = dataEvents
+            .filter { it.type == DataEvent.TYPE_CHANGED }
+            .map { it.dataItem.freeze() }
         dataEvents.release()
 
         lifecycleScope.launch {
-            val cryptoPrefs = dataStore.data.first()
-            var lastSync: Long? = null
-            var uriToRemove: List<Uri> = emptyList()
-
-            for ((type, dataItem) in events) {
-                if (type == DataEvent.TYPE_CHANGED) {
-                    lastSync = elaborateDataItem(dataItem, TokenFileManager.getTokensDirectory(filesDir), cryptoPrefs)
-                    uriToRemove = uriToRemove + dataItem.uri
-                }
-            }
-
-            if (uriToRemove.isNotEmpty()) {
-                for (uri in uriToRemove) {
-                    removePendingDataItem(this@MainActivity, uri)
-                }
-            }
-
-            otpViewModel.loadTokensFromDirectory(this@MainActivity)
-
-            if (lastSync != null) preferencesViewModel.saveLastSync(lastSync)
+            processDataItems(events)
         }
     }
 }

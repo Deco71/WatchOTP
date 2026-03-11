@@ -36,6 +36,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import com.decoapps.wearotp.mobile.R
 import com.decoapps.wearotp.mobile.data.PreferencesViewModel
+import com.decoapps.wearotp.mobile.data.syncData
 import com.decoapps.wearotp.mobile.theme.ColorMode
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,7 +118,7 @@ fun SettingsScreen(navController: NavController) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { TODO() }
+                        .clickable { syncData(context) }
                         .padding(vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {

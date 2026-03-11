@@ -257,7 +257,8 @@ fun AddOTPManually(modifier: Modifier = Modifier, navController: NavController) 
                                     secret = secret.trim().uppercase(),
                                     algorithm = selectedAlgorithm,
                                     digits = selectedDigits,
-                                    interval = selectedInterval
+                                    interval = selectedInterval,
+                                    lastUpdate = System.currentTimeMillis()
                                 ),
                                 context
                             )

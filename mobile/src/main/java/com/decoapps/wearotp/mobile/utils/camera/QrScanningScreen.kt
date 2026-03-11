@@ -80,7 +80,8 @@ fun QrScanningScreen(navController: NavController) {
                                     secret = fields.secret,
                                     algorithm = fields.algorithm,
                                     digits = fields.digits,
-                                    interval = fields.interval
+                                    interval = fields.interval,
+                                    lastUpdate = System.currentTimeMillis()
                                 ),
                                 context
                             )

@@ -11,4 +11,5 @@ data class OTPService(
     val algorithm: String = "SHA1",
     val digits: Int = 6,
     val interval: Int = 30,
+    val lastUpdate : Long
 )

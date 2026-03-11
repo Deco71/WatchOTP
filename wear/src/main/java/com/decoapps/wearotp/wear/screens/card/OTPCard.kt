@@ -1,5 +1,6 @@
 package com.decoapps.wearotp.wear.screens.card
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.tween
@@ -55,17 +56,14 @@ fun OTPCard(
     val totp = viewModel.formatToken(viewModel.formatToken(token))
 
     LaunchedEffect(timeProgress) {
+        Log.d("OTPCard", "Time Progress: $timeProgress, Last Animated Value: ${lastAnimatedValue.floatValue}, Is First Frame: ${isFirstFrame.value}")
         if (isFirstFrame.value) {
             animatedProgress.snapTo(timeProgress)
             isFirstFrame.value = false
         } else if(lastAnimatedValue.floatValue < timeProgress) {
             animatedProgress.animateTo(
                 targetValue = timeProgress,
-                animationSpec = tween(durationMillis = 100, easing = LinearEasing))
-            animatedProgress.animateTo(
-                targetValue = (timeProgress - timeSkip),
-                animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)
-            )
+                animationSpec = tween(durationMillis = 300, easing = LinearEasing))
         }
         else {
             animatedProgress.animateTo(

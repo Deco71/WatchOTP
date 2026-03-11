@@ -75,7 +75,7 @@ fun OTPCard(
         } else if(lastAnimatedValue.floatValue < timeProgress) {
             animatedProgress.animateTo(
                 targetValue = timeProgress,
-                animationSpec = tween(durationMillis = 100, easing = LinearEasing))
+                animationSpec = tween(durationMillis = 300, easing = LinearEasing))
             animatedProgress.animateTo(
                 targetValue = (timeProgress - timeSkip),
                 animationSpec = tween(durationMillis = animationTime, easing = LinearEasing)
@@ -180,7 +180,7 @@ fun OTPCard(
 
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = viewModel.formatToken(viewModel.formatToken(token)),
+                    text = viewModel.formatToken(token),
                     style = MaterialTheme.typography.headlineSmall.copy(
                         fontFamily = FontFamily.Monospace,
                         letterSpacing = 4.sp

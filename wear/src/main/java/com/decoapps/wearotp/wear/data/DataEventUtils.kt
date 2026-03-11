@@ -19,15 +19,31 @@ import com.decoapps.wearotp.shared.cryptoPreferences.CryptoPreferences
 fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPreferences) : Long? {
 
     val tokenFileManager = TokenFileManager()
+    val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
 
     var last_sync : Long? = null
 
     when {
+        dataItem.uri.path?.startsWith("/sync") == true -> {
+
+            val ids = dataMap.getString("allTokenIds")
+
+            if (ids != null) {
+                val idList = ids.split(",").toSet()
+                tokensDir.listFiles()?.forEach { file ->
+                    if (!idList.contains(file.name)) {
+                        tokenFileManager.deleteToken(tokensDir, file.name)
+                    }
+                }
+            }
+
+            last_sync = dataMap.getLong("timestamp")
+
+        }
+
         dataItem.uri.path?.startsWith("/create-token") == true -> {
 
             val id = dataItem.uri.pathSegments.lastOrNull() ?: return last_sync
-
-            val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
 
             val privateKeyBase64 = cryptoPrefs.privateKeyBase64
             val secret: String
@@ -35,7 +51,7 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
             val digits: Int
             val interval: Int
 
-            if (privateKeyBase64 != null && dataMap.containsKey("secret_encrypted")) {
+            if (privateKeyBase64 != null) {
                 try {
                     val keyFactory = KeyFactory.getInstance("RSA")
                     val privateKey = keyFactory.generatePrivate(
@@ -47,13 +63,15 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
                     interval = rsaDecrypt(Base64.getDecoder().decode(dataMap.getString("interval")!!), privateKey).toInt()
                 } catch (e: Exception) {
                     Log.e("DataEventUtils", "RSA decryption failed: ${e.message}")
-                    return last_sync
+                    return null
                 }
             } else {
                 // Fallback per messaggi non cifrati (retrocompatibilità)
                 Log.w("DataEventUtils", "Received unencrypted token data, skipping for security.")
-                return last_sync
+                return null
             }
+
+            last_sync = dataMap.getLong("timestamp")
 
             val newService = OTPService(
                 id = id,
@@ -63,25 +81,20 @@ fun elaborateDataItem(dataItem: DataItem, tokensDir: File, cryptoPrefs: CryptoPr
                 algorithm = algorithm,
                 digits = digits,
                 interval = interval,
+                lastUpdate = last_sync
             )
-            last_sync = dataMap.getLong("timestamp")
-            tokenFileManager.saveEncryptedToken(tokensDir, newService)
+            if (!tokenFileManager.saveEncryptedToken(tokensDir, newService)) return null
         }
 
         dataItem.uri.path?.startsWith("/delete-token") == true -> {
 
-            val id = dataItem.uri.pathSegments.lastOrNull() ?: return last_sync
+            val id = dataItem.uri.pathSegments.lastOrNull() ?: return null
 
-            val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
             last_sync = dataMap.getLong("timestamp")
 
             tokenFileManager.deleteToken(tokensDir, id)
         }
     }
-
-    val lastSyncDir = tokensDir.parent
-
-    File(lastSyncDir, "last_sync").writeText(last_sync?.toString() ?: "")
 
     return last_sync
 }
@@ -95,6 +108,19 @@ fun publishPublicKey(context: Context, publicKeyBase64: String) {
         val request = putDataMapReq.asPutDataRequest().setUrgent()
 
         Wearable.getDataClient(context).putDataItem(request)
+            .addOnSuccessListener {
+                Log.d("DataEventUtils", "Public key published to Wearable Data Layer")
+            }
+            .addOnFailureListener {
+                Log.e("DataEventUtils", "Failed to publish public key: ${it.message}")
+            }
+
+        val initialSyncPutDataMapReq = PutDataMapRequest.create("/initial-sync").apply {
+            dataMap.putLong("timestamp", System.currentTimeMillis())
+        }
+        val initialSyncRequest = initialSyncPutDataMapReq.asPutDataRequest().setUrgent()
+
+        Wearable.getDataClient(context).putDataItem(initialSyncRequest)
             .addOnSuccessListener {
                 Log.d("DataEventUtils", "Public key published to Wearable Data Layer")
             }
