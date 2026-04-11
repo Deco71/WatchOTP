@@ -59,6 +59,15 @@
     <string name="invalid_qr_code">Invalid QR code</string>
     <string name="add_manually">Add manually</string>
 
+    <!-- Otpauth parser errors -->
+    <string name="error_invalid_otpauth_uri">Invalid otpauth URI</string>
+    <string name="error_invalid_otpauth_scheme">Invalid otpauth scheme</string>
+    <string name="error_unsupported_otp_type">Unsupported OTP type</string>
+    <string name="error_missing_account_label">Missing account label</string>
+    <string name="error_missing_secret">Missing secret</string>
+    <string name="error_invalid_digits">Invalid digits</string>
+    <string name="error_invalid_period">Invalid period</string>
+
     <!-- Camera permission -->
     <string name="permission_prompt">Please grant camera permission to use the QR code scanning feature.</string>
     <string name="request_permission">Request permission</string>

@@ -60,6 +60,15 @@
     <string name="invalid_qr_code">QR code non valido</string>
     <string name="add_manually">Aggiungi manualmente</string>
 
+    <!-- Otpauth parser errors -->
+    <string name="error_invalid_otpauth_uri">URI otpauth non valido</string>
+    <string name="error_invalid_otpauth_scheme">Schema otpauth non valido</string>
+    <string name="error_unsupported_otp_type">Tipo OTP non supportato</string>
+    <string name="error_missing_account_label">Manca l\'account</string>
+    <string name="error_missing_secret">Manca il segreto</string>
+    <string name="error_invalid_digits">Numero di cifre non valido</string>
+    <string name="error_invalid_period">Intervallo non valido</string>
+
     <!-- Camera permission -->
     <string name="permission_prompt">Concedi il permesso alla fotocamera per usare la funzione di scansione del QR.</string>
     <string name="request_permission">Richiedi permesso</string>
