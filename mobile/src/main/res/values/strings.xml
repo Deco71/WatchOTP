@@ -73,4 +73,15 @@
     <string name="request_permission">Request permission</string>
     <string name="prefer_add_manually">If you prefer, you can also add your OTP manually</string>
 
+    <!-- Backup / restore -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_create">Create backup</string>
+    <string name="backup_create_desc">Save your accounts to a file.</string>
+    <string name="backup_content_description">Backup</string>
+    <string name="backup_restore">Restore backup</string>
+    <string name="backup_restore_desc">Restore your accounts from a file.</string>
+    <string name="backup_restore_content_description">Restore</string>
+    <string name="backup_enter_key_title">Enter key</string>
+    <string name="backup_key_label">Backup key</string>
+
 </resources>

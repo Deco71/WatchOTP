@@ -190,7 +190,7 @@ fun SettingsScreen(navController: NavController) {
                 Spacer(modifier = Modifier.height(24.dp))
 
                 Text(
-                    text = "Backup",
+                    text = stringResource(id = R.string.backup_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.primary
                 )
@@ -213,18 +213,18 @@ fun SettingsScreen(navController: NavController) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Save,
-                        contentDescription = "Backup",
+                        contentDescription = stringResource(id = R.string.backup_content_description),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Create backup",
+                            text = stringResource(id = R.string.backup_create),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Save your accounts to a file.",
+                            text = stringResource(id = R.string.backup_create_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -247,18 +247,18 @@ fun SettingsScreen(navController: NavController) {
                 ) {
                     Icon(
                         imageVector = Icons.Default.Restore,
-                        contentDescription = "Restore",
+                        contentDescription = stringResource(id = R.string.backup_restore_content_description),
                         tint = MaterialTheme.colorScheme.primary,
                         modifier = Modifier.size(32.dp)
                     )
                     Spacer(modifier = Modifier.width(8.dp))
                     Column {
                         Text(
-                            text = "Restore backup",
+                            text = stringResource(id = R.string.backup_restore),
                             style = MaterialTheme.typography.bodyLarge
                         )
                         Text(
-                            text = "Restore your accounts from a file.",
+                            text = stringResource(id = R.string.backup_restore_desc),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -327,7 +327,7 @@ fun SettingsScreen(navController: NavController) {
                                     pendingAction?.invoke()
                                 }
                             ) {
-                                Text("OK")
+                                Text(stringResource(id = R.string.confirm))
                             }
                         },
                         dismissButton = {
@@ -337,15 +337,15 @@ fun SettingsScreen(navController: NavController) {
                                     keyInput = ""
                                 }
                             ) {
-                                Text("Annulla")
+                                Text(stringResource(id = R.string.cancel))
                             }
                         },
-                        title = { Text("Inserisci chiave") },
+                        title = { Text(stringResource(id = R.string.backup_enter_key_title)) },
                         text = {
                             OutlinedTextField(
                                 value = keyInput,
                                 onValueChange = { keyInput = it },
-                                label = { Text("Chiave di backup") },
+                                label = { Text(stringResource(id = R.string.backup_key_label)) },
                                 singleLine = true
                             )
                         }
