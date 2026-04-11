@@ -30,6 +30,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.res.stringResource
+import com.decoapps.wearotp.mobile.R
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
@@ -55,6 +57,7 @@ fun QrScanningScreen(navController: NavController) {
 
     val lifecycleOwner = LocalLifecycleOwner.current
     val context = LocalContext.current
+    val invalidQrCodeText = stringResource(id = R.string.invalid_qr_code)
     val previewView = remember { PreviewView(context) }
     val blockOtherQRs = remember { mutableStateOf(false) }
     val preview = Preview.Builder().build()
@@ -92,7 +95,7 @@ fun QrScanningScreen(navController: NavController) {
                         }
                     }
                 } else {
-                    viewModel.onQrCodeNotValid("Invalid QR Code")
+                    viewModel.onQrCodeNotValid(invalidQrCodeText)
                 }
             }
         )
@@ -166,7 +169,7 @@ private fun QRCodeReaderBorder(
                     .padding(top = 12.dp)
                     .background(MaterialTheme.colorScheme.surface.copy(alpha = .6f), RoundedCornerShape(16.dp))
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                text = "Scan the QR code provided by your service",
+                text = stringResource(id = R.string.scan_qr_prompt),
                 color = MaterialTheme.colorScheme.onSurface
             )
             Canvas(
@@ -214,7 +217,7 @@ private fun QRCodeReaderBorder(
                 .padding(bottom = 24.dp)
                 .padding(horizontal = 16.dp, vertical = 8.dp),
         ) {
-            Text("Add Manually")
+            Text(stringResource(id = R.string.add_manually))
         }
     }
 }

@@ -29,6 +29,7 @@ fun parseOtpauth(otpauth: String): OtpauthParseResult {
 
     val type = (uri.host ?: uri.authority).orEmpty().lowercase()
     if (type != "totp") {
+
         return OtpauthParseResult.Error("Unsupported OTP type")
     }
 
