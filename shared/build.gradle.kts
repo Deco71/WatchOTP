@@ -33,7 +33,6 @@ android {
 }
 
 dependencies {
-    implementation(libs.retrofit)
     implementation(libs.compose.material)
     implementation(libs.core.ktx)
     implementation(libs.appcompat)
