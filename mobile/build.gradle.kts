@@ -32,7 +32,7 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -52,25 +52,19 @@ dependencies {
 
     implementation(project(":shared"))
     implementation(libs.navigation.compose)
-    implementation(libs.coil)
     implementation(libs.coil.compose)
     implementation(libs.material.icons.extended)
     implementation(libs.core.ktx)
     implementation(libs.lifecycle.runtime.ktx)
-    implementation(libs.commons.codec)
     implementation(libs.activity.compose)
     implementation(platform(libs.compose.bom))
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(libs.ui)
     implementation(libs.ui.graphics)
     implementation(libs.ui.tooling.preview)
-    implementation(libs.material3)
     implementation(libs.runtime.livedata)
     implementation(libs.play.services.wearable)
     implementation(libs.datastore.preferences)
-    implementation(libs.easycrop)
-    implementation(libs.exifinterface)
-    implementation(libs.google.material)
     implementation(libs.androidx.material3)
     implementation(libs.kotlinx.serialization.json)
     testImplementation(libs.junit)
