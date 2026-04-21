@@ -84,6 +84,10 @@
     <string name="backup_restore_content_description">Ripristina</string>
     <string name="backup_enter_key_title">Inserisci chiave</string>
     <string name="backup_key_label">Chiave di backup</string>
+    <string name="backup_created_successfully">Backup creato con successo</string>
+    <string name="backup_creation_failed">Errore nella creazione del backup</string>
+    <string name="backup_restored_successfully">Backup ripristinato con successo</string>
+    <string name="backup_restore_failed">Errore nel ripristino del backup, controlla che la tua chiave</string>
 
 </resources>
 
