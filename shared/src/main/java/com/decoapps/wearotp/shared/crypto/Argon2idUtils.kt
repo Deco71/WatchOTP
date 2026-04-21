@@ -11,7 +11,7 @@ const val ITERATIONS = 6
 const val HASH_LENGTH = 32 //bytes
 const val PARALLELISM = 1
 const val MEMORY_COST = 65536 //64 MB
-const val SALT_LENGTH = 16
+const val SALT_LENGTH = CryptoManager.SALT_LENGTH
 
 fun deriveKeyFromPassword(password: ByteBuffer,
                           salt: ByteBuffer,

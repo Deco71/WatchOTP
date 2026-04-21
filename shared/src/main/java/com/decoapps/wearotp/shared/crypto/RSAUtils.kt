@@ -1,20 +1,43 @@
 package com.decoapps.wearotp.shared.crypto
 
+import android.security.keystore.KeyGenParameterSpec
+import android.security.keystore.KeyProperties
+import android.util.Log
 import java.security.KeyPair
 import java.security.KeyPairGenerator
-import java.security.NoSuchAlgorithmException
+import java.security.KeyStore
 import java.security.PrivateKey
 import java.security.PublicKey
 import javax.crypto.Cipher
 
 private const val RSA_TRANSFORMATION = "RSA/ECB/OAEPWithSHA-256AndMGF1Padding"
 
-fun createRSAKeys(): KeyPair? {
+fun getRSAKeys(): KeyPair? {
     return try {
-        val keyPairGenerator = KeyPairGenerator.getInstance("RSA")
-        keyPairGenerator.initialize(2048)
+        val alias = "rsa_alias"
+        val keyStore = KeyStore.getInstance("AndroidKeyStore")
+        keyStore.load(null)
+
+        if (keyStore.containsAlias(alias)) {
+            val entry = keyStore.getEntry(alias, null) as? KeyStore.PrivateKeyEntry
+            if (entry != null) {
+                Log.d("RSAUtils", "RSA key pair already exists, retrieving from KeyStore")
+                return KeyPair(entry.certificate.publicKey, entry.privateKey)
+            }
+        }
+
+        Log.d("RSAUtils", "Generating new RSA key pair")
+        val keyPairGenerator = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore")
+        val spec = KeyGenParameterSpec.Builder(alias, KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
+            .setKeySize(2048)
+            .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_RSA_OAEP)
+            .setDigests(KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
+            .setIsStrongBoxBacked(true)
+            .build()
+            
+        keyPairGenerator.initialize(spec)
         keyPairGenerator.generateKeyPair()
-    } catch (e: NoSuchAlgorithmException) {
+    } catch (e: Exception) {
         e.printStackTrace()
         null
     }

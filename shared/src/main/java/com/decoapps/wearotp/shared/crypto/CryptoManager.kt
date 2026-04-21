@@ -47,6 +47,7 @@ class CryptoManager {
                     .setBlockModes(BLOCK_MODE)
                     .setEncryptionPaddings(PADDING)
                     .setUserAuthenticationRequired(false)
+                    .setIsStrongBoxBacked(true)
                     .setRandomizedEncryptionRequired(true)
                     .build()
             )
@@ -69,9 +70,9 @@ class CryptoManager {
     }
 
     fun getDecryptBackupCipher(userKey: String, salt: ByteArray, nonce: ByteArray): Cipher {
-        val salt = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val saltBuffer = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
         val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
-        val key = deriveKeyFromPassword(userKeyBuffer, salt)
+        val key = deriveKeyFromPassword(userKeyBuffer, saltBuffer)
         return getDecryptCipherForNonce(nonce, key)
     }
 
@@ -103,19 +104,6 @@ class CryptoManager {
 
             getDecryptCipherForNonce(nonce).doFinal(encryptedBytes)
         }
-    }
-
-    fun encrypt(bytes: ByteArray): ByteArray {
-        val encryptCipher = getEncryptCipher()
-        val nonce = encryptCipher.iv
-        val encrypted = encryptCipher.doFinal(bytes)
-        return nonce + encrypted
-    }
-
-    fun decrypt(bytes: ByteArray): ByteArray {
-        val nonce = bytes.copyOfRange(0, GCM_NONCE_SIZE)
-        val data = bytes.copyOfRange(GCM_NONCE_SIZE, bytes.size)
-        return getDecryptCipherForNonce(nonce).doFinal(data)
     }
 
     companion object {
