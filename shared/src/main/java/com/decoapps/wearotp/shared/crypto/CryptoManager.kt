@@ -40,17 +40,26 @@ class CryptoManager {
     }
 
     private fun createKey(alias: String) : SecretKey {
-        return KeyGenerator.getInstance(ALGORITHM).apply {
-            init(
-                KeyGenParameterSpec.Builder(alias,
-                    KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT)
-                    .setBlockModes(BLOCK_MODE)
-                    .setEncryptionPaddings(PADDING)
-                    .setUserAuthenticationRequired(false)
-                    .setRandomizedEncryptionRequired(true)
-                    .build()
-            )
-        }.generateKey()
+        val keyGenerator = KeyGenerator.getInstance(ALGORITHM, "AndroidKeyStore")
+        return try {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = true))
+            keyGenerator.generateKey()
+        } catch (_: Exception) {
+            keyGenerator.init(createAesKeySpec(alias = alias, strongBoxBacked = false))
+            keyGenerator.generateKey()
+        }
+    }
+
+    private fun createAesKeySpec(alias: String, strongBoxBacked: Boolean): KeyGenParameterSpec {
+        return KeyGenParameterSpec.Builder(
+            alias,
+            KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT
+        )
+            .setBlockModes(BLOCK_MODE)
+            .setEncryptionPaddings(PADDING)
+            .setIsStrongBoxBacked(strongBoxBacked)
+            .setRandomizedEncryptionRequired(true)
+            .build()
     }
 
     fun getEncryptBackupCipher(fos: FileOutputStream, userKey: String) : Cipher {
@@ -69,9 +78,9 @@ class CryptoManager {
     }
 
     fun getDecryptBackupCipher(userKey: String, salt: ByteArray, nonce: ByteArray): Cipher {
-        val salt = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
+        val saltBuffer = ByteBuffer.allocateDirect(salt.size).put(salt).flip() as ByteBuffer
         val userKeyBuffer = ByteBuffer.allocateDirect(userKey.toByteArray().size).put(userKey.toByteArray()).flip() as ByteBuffer
-        val key = deriveKeyFromPassword(userKeyBuffer, salt)
+        val key = deriveKeyFromPassword(userKeyBuffer, saltBuffer)
         return getDecryptCipherForNonce(nonce, key)
     }
 
@@ -103,19 +112,6 @@ class CryptoManager {
 
             getDecryptCipherForNonce(nonce).doFinal(encryptedBytes)
         }
-    }
-
-    fun encrypt(bytes: ByteArray): ByteArray {
-        val encryptCipher = getEncryptCipher()
-        val nonce = encryptCipher.iv
-        val encrypted = encryptCipher.doFinal(bytes)
-        return nonce + encrypted
-    }
-
-    fun decrypt(bytes: ByteArray): ByteArray {
-        val nonce = bytes.copyOfRange(0, GCM_NONCE_SIZE)
-        val data = bytes.copyOfRange(GCM_NONCE_SIZE, bytes.size)
-        return getDecryptCipherForNonce(nonce).doFinal(data)
     }
 
     companion object {
