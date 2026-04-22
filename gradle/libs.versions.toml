@@ -32,8 +32,21 @@ appcompat = "1.7.1"
 material = "1.13.0"
 material3 = "1.4.0"
 ui = "1.10.6"
+googleid = "1.2.0"
+playServicesAuth = "21.5.1"
+googleApiClient = "2.9.0"
+googleApiServicesDrive = "v3-rev20230822-2.0.0"
+googleHttpClientGson = "2.1.0"
+androidxCredentials = "1.6.0"
 
 [libraries]
+googleid = { module = "com.google.android.libraries.identity.googleid:googleid", version.ref = "googleid" }
+play-services-auth = { module = "com.google.android.gms:play-services-auth", version.ref = "playServicesAuth" }
+google-api-services-drive-vv3rev20230822200 = { module = "com.google.apis:google-api-services-drive", version.ref = "googleApiServicesDrive" }
+google-http-client-gson = { module = "com.google.http-client:google-http-client-gson", version.ref = "googleHttpClientGson" }
+androidx-credentials = { module = "androidx.credentials:credentials", version.ref = "androidxCredentials" }
+google-api-client-v220 = { module = "com.google.api-client:google-api-client", version.ref = "googleApiClient" }
+google-api-client-android = { module = "com.google.api-client:google-api-client-android", version.ref = "googleApiClient" }
 androidx-camera-camera2 = { module = "androidx.camera:camera-camera2", version.ref = "cameraCore" }
 androidx-camera-core = { module = "androidx.camera:camera-core", version.ref = "cameraCore" }
 androidx-camera-lifecycle = { module = "androidx.camera:camera-lifecycle", version.ref = "cameraCore" }
