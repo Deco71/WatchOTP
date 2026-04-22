@@ -74,5 +74,20 @@
     <string name="request_permission">Richiedi permesso</string>
     <string name="prefer_add_manually">Se preferisci, puoi aggiungere il tuo OTP manualmente.</string>
 
+    <!-- Backup / restore -->
+    <string name="backup_title">Backup</string>
+    <string name="backup_create">Crea backup</string>
+    <string name="backup_create_desc">Salva i tuoi account in un file.</string>
+    <string name="backup_content_description">Backup</string>
+    <string name="backup_restore">Ripristina backup</string>
+    <string name="backup_restore_desc">Ripristina i tuoi account da un file.</string>
+    <string name="backup_restore_content_description">Ripristina</string>
+    <string name="backup_enter_key_title">Inserisci chiave</string>
+    <string name="backup_key_label">Chiave di backup</string>
+    <string name="backup_created_successfully">Backup creato con successo</string>
+    <string name="backup_creation_failed">Errore nella creazione del backup</string>
+    <string name="backup_restored_successfully">Backup ripristinato con successo</string>
+    <string name="backup_restore_failed">Errore nel ripristino del backup, controlla che la tua chiave</string>
+
 </resources>
 

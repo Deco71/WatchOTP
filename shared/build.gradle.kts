@@ -42,4 +42,5 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
+    implementation(libs.argon2kt)
 }
