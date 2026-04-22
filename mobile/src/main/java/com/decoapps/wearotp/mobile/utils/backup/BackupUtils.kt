@@ -22,7 +22,6 @@ fun createBackup(context: Context, uri: Uri, userKey: String) {
     val cryptoManager = CryptoManager()
 
     try {
-        // 1. Create the cleartext ZIP in memory
         val baos = ByteArrayOutputStream()
         ZipOutputStream(baos).use { zos ->
             tokenFileManager.loadEncryptedTokens(tokensDir).forEach { service ->
@@ -36,11 +35,9 @@ fun createBackup(context: Context, uri: Uri, userKey: String) {
         }
         val cleartextZipBytes = baos.toByteArray()
 
-        // 2. Encrypt the entire ZIP in memory and write to the output file
         context.contentResolver.openFileDescriptor(uri, "w")?.use { pfd ->
             FileOutputStream(pfd.fileDescriptor).use { fos ->
                 val encryptCipher = cryptoManager.getEncryptBackupCipher(fos, userKey)
-                // doFinal handles the AEAD tag generation automatically for the whole file
                 val ciphertextBytes = encryptCipher.doFinal(cleartextZipBytes)
                 fos.write(ciphertextBytes)
             }
@@ -57,12 +54,6 @@ fun restoreBackup(context: Context, uri: Uri, userKey: String) {
     val tokenFileManager = TokenFileManager()
     val cryptoManager = CryptoManager()
     try {
-        //TODO Make this deletion step better, for now it's too extreme and maybe unnecessary but it's ok
-        if (tokensDir.exists()) {
-            tokensDir.listFiles()?.forEach { it.delete() }
-        } else {
-            tokensDir.mkdirs()
-        }
 
         context.contentResolver.openInputStream(uri)?.use { inputStream ->
             val salt = ByteArray(CryptoManager.SALT_LENGTH)
@@ -74,22 +65,17 @@ fun restoreBackup(context: Context, uri: Uri, userKey: String) {
             val decryptCipher = cryptoManager.getDecryptBackupCipher(userKey, salt, nonce)
 
             Log.d("BackupUtils", "Starting to read backup zip")
-            // 1. Read the rest of the stream into memory
             val ciphertextBytes = inputStream.readBytes()
             
-            // 2. Decrypt in memory using doFinal()
-            // This absolutely prevents "AEAD Tag Swallowing" because it validates the tag BEFORE returning plaintext
+            // Decrypt all file in memory using doFinal() to prevent AEAD Tag Swallowing
             val cleartextZipBytes = decryptCipher.doFinal(ciphertextBytes)
 
-            // If we reached here, the backup is 100% authentic and hasn't been tampered with.
-            // Safe to clear old tokens now.
             if (tokensDir.exists()) {
                 tokensDir.listFiles()?.forEach { it.delete() }
             } else {
                 tokensDir.mkdirs()
             }
 
-            // 3. Process the decrypted ZIP
             ZipInputStream(ByteArrayInputStream(cleartextZipBytes)).use { zis ->
                 var entry = zis.nextEntry
                 while (entry != null) {
@@ -104,7 +90,7 @@ fun restoreBackup(context: Context, uri: Uri, userKey: String) {
         }
         Toast.makeText(context, context.getString(R.string.backup_restored_successfully), Toast.LENGTH_SHORT).show()
         syncData(context)
-    } catch (e: Exception) { // Catch generic exception as crypto errors (AEADBadTagException) can occur
+    } catch (e: Exception) {
         Log.e("BackupUtils", "Error restoring backup", e)
         Toast.makeText(context, context.getString(R.string.backup_restore_failed), Toast.LENGTH_SHORT).show()
     }
